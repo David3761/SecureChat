@@ -1,5 +1,7 @@
 import 'package:chat/core/app_router.dart';
+import 'package:chat/core/network/connection_controller.dart';
 import 'package:chat/core/providers.dart';
+import 'package:chat/core/widgets/accounts_drawer.dart';
 import 'package:drift_db_viewer/drift_db_viewer.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,11 +13,45 @@ import 'contacts_repository.dart';
 class ContactsListScreen extends ConsumerWidget {
   const ContactsListScreen({super.key});
 
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    Contact contact,
+  ) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Contact?'),
+        content: Text(
+          'Are you sure you want to remove ${contact.alias}? This will not delete your message history, but you will need their public key to message them again.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final repository = await ref.read(contactsRepositoryProvider.future);
+      await repository.deleteContact(contact.id);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final contactsAsyncValue = ref.watch(contactsStreamProvider);
+    final connectionState = ref.watch(connectionControllerProvider);
+    //TODO: update the ui based on this state
 
     return Scaffold(
+      drawer: AccountDrawer(),
       appBar: AppBar(
         title: const Text('My Contacts'),
         actions: [
@@ -107,36 +143,5 @@ class ContactsListScreen extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
     );
-  }
-
-  Future<void> _confirmDelete(
-    BuildContext context,
-    WidgetRef ref,
-    Contact contact,
-  ) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Contact?'),
-        content: Text(
-          'Are you sure you want to remove ${contact.alias}? This will not delete your message history, but you will need their public key to message them again.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      final repository = await ref.read(contactsRepositoryProvider.future);
-      await repository.deleteContact(contact.id);
-    }
   }
 }

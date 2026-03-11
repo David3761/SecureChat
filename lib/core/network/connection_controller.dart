@@ -14,40 +14,30 @@ class ConnectionController extends Notifier<ConnectionState> {
 
   @override
   ConnectionState build() {
+    final wsService = ref.read(webSocketServiceProvider);
+
     ref.onDispose(() {
       _messageSubscription?.cancel();
+      wsService.disconnect();
     });
 
-    ref.listen(keyControllerProvider, (previous, next) {
-      final bool justCompletedSetup =
-          previous?.isKeySetupComplete == false &&
-          next.isKeySetupComplete == true;
-      final bool keyChanged = previous?.publicKeyHex != next.publicKeyHex;
+    final activeKey = ref.watch(
+      keyControllerProvider.select((state) => state.publicKeyHex),
+    );
 
-      if ((justCompletedSetup || keyChanged) && next.publicKeyHex != null) {
+    if (activeKey != null) {
+      Future.microtask(() async {
+        await _connect(activeKey);
         _setupMessageListener();
-
-        _connect(next.publicKeyHex!);
-      } else if (previous?.isKeySetupComplete == true &&
-          !next.isKeySetupComplete) {
-        _messageSubscription?.cancel();
-
-        _disconnect();
-      }
-    });
-
-    final initialKeyState = ref.read(keyControllerProvider);
-    if (initialKeyState.isKeySetupComplete &&
-        initialKeyState.publicKeyHex != null) {
-      Future(() {
-        _setupMessageListener();
-        _connect(initialKeyState.publicKeyHex!);
       });
-
       return ConnectionState.connecting;
+    } else {
+      Future.microtask(() {
+        _messageSubscription?.cancel();
+        _disconnect();
+      });
+      return ConnectionState.disconnected;
     }
-
-    return ConnectionState.disconnected;
   }
 
   Future<void> _connect(String pubKey) async {
@@ -57,7 +47,7 @@ class ConnectionController extends Notifier<ConnectionState> {
 
     try {
       await wsService.connect(pubKey);
-
+      debugPrint("Successfully conected the frontend");
       state = ConnectionState.connected;
     } catch (e) {
       state = ConnectionState.error;
@@ -97,7 +87,7 @@ class ConnectionController extends Notifier<ConnectionState> {
       final contactsRepo = await ref.read(contactsRepositoryProvider.future);
       var contact = await contactsRepo.getContactByPublicKey(senderPubKey);
 
-      //TODO: special section for sender messaging me
+      //TODO: special section for stranger messaging me
       if (contact == null) {
         final shortKey =
             '${senderPubKey.substring(0, 4)}...${senderPubKey.substring(senderPubKey.length - 4)}';
@@ -137,6 +127,6 @@ class ConnectionController extends Notifier<ConnectionState> {
 }
 
 final connectionControllerProvider =
-    NotifierProvider<ConnectionController, ConnectionState>(() {
-      return ConnectionController();
-    });
+    NotifierProvider<ConnectionController, ConnectionState>(
+      ConnectionController.new,
+    );

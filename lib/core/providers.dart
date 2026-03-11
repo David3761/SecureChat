@@ -1,4 +1,5 @@
 import 'package:chat/core/network/websocket_service.dart';
+import 'package:chat/features/key_management/key_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'security/crypto_service.dart';
 import 'security/secure_storage_service.dart';
@@ -17,9 +18,22 @@ final cryptoServiceProvider = Provider<CryptoService>((ref) {
 final databaseProvider = FutureProvider<AppDatabase>((ref) async {
   final secureStorage = ref.read(secureStorageProvider);
 
-  final dbKey = await secureStorage.getOrCreateDatabaseKey();
+  final activePublicKey = ref.watch(
+    keyControllerProvider.select((state) => state.publicKeyHex),
+  );
 
-  return AppDatabase(dbKey);
+  if (activePublicKey == null || activePublicKey.isEmpty) {
+    throw Exception('Cannot open database: No active account.');
+  }
+  final dbKey = await secureStorage.getOrCreateDatabaseKey(activePublicKey);
+
+  final db = AppDatabase(activePublicKey, dbKey);
+
+  ref.onDispose(() {
+    db.close();
+  });
+
+  return db;
 });
 
 final webSocketServiceProvider = Provider<WebSocketService>((ref) {

@@ -1,4 +1,5 @@
 import 'package:chat/core/app_router.dart';
+import 'package:chat/core/providers.dart';
 import 'package:chat/core/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,11 +17,26 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _keyController = TextEditingController();
   String? _inputError;
+  List<String> _knownAccounts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAccounts();
+  }
 
   @override
   void dispose() {
     _keyController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadAccounts() async {
+    final storage = ref.read(secureStorageProvider);
+    final accounts = await storage.getKnownAccounts();
+    if (mounted) {
+      setState(() => _knownAccounts = accounts);
+    }
   }
 
   Future<void> _pasteFromClipboard() async {
@@ -137,6 +153,59 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    //TODO: better UI here
+                    if (_knownAccounts.isNotEmpty) ...[
+                      Text(
+                        'Log back in',
+                        style: Theme.of(context).textTheme.titleLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ..._knownAccounts.map(
+                        (pubKey) => Card(
+                          margin: const EdgeInsets.symmetric(vertical: 4),
+                          child: ListTile(
+                            leading: const Icon(Icons.person),
+                            title: Text(
+                              '${pubKey.substring(0, 12)}...',
+                              style: const TextStyle(
+                                fontFamily: 'Courier',
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () {
+                              ref
+                                  .read(keyControllerProvider.notifier)
+                                  .login(pubKey);
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Divider(thickness: 1, color: AppColors.grey),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
+                            child: Text(
+                              'OR',
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: AppColors.grey,
+                              ),
+                            ),
+                          ),
+                          const Expanded(
+                            child: Divider(thickness: 1, color: AppColors.grey),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                    ],
                     Text(
                       'Get Started',
                       style: Theme.of(context).textTheme.displayLarge,

@@ -29,7 +29,7 @@ class ChatController extends AsyncNotifier<void> {
         throw Exception('Private key not loaded in memory.');
       }
 
-      final myPubKey = await storageService.getPublicKey();
+      final myPubKey = await storageService.getLastActiveAccount();
       if (myPubKey == null) throw Exception("Missing public key");
 
       final messageId = const Uuid().v4();

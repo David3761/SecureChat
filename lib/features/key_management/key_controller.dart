@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:sodium_libs/sodium_libs.dart';
 import '../../core/providers.dart';
 
@@ -42,20 +46,10 @@ class KeyController extends Notifier<KeyState> {
 
     try {
       final storage = ref.read(secureStorageProvider);
-      final crypto = ref.read(cryptoServiceProvider);
+      final lastActive = await storage.getLastActiveAccount();
 
-      final privkey = await storage.getPrivateKey();
-      final pubKey = await storage.getPublicKey();
-
-      if (privkey != null && privkey.isNotEmpty && pubKey != null) {
-        final SecureKey secureKey = crypto.createSecureKeyFromHex(privkey);
-
-        state = KeyState(
-          isKeySetupComplete: true,
-          isLoading: false,
-          activeSecretKey: secureKey,
-          publicKeyHex: pubKey,
-        );
+      if (lastActive != null && lastActive.isNotEmpty) {
+        await login(lastActive);
       } else {
         state = KeyState(isKeySetupComplete: false, isLoading: false);
       }
@@ -63,7 +57,38 @@ class KeyController extends Notifier<KeyState> {
       state = KeyState(
         isKeySetupComplete: false,
         isLoading: false,
-        errorMessage: 'Failed to check for keys: $e',
+        errorMessage: 'Failed to log in: $e',
+      );
+    }
+  }
+
+  Future<void> login(String publicKeyHex) async {
+    state = KeyState(isLoading: true);
+
+    try {
+      final crypto = ref.read(cryptoServiceProvider);
+      final storage = ref.read(secureStorageProvider);
+
+      final privateKey = await storage.getPrivateKey(publicKeyHex);
+
+      if (privateKey != null && privateKey.isNotEmpty) {
+        final SecureKey secureKey = crypto.createSecureKeyFromHex(privateKey);
+        await storage.setLastActiveAccount(publicKeyHex);
+
+        state = KeyState(
+          isKeySetupComplete: true,
+          isLoading: false,
+          activeSecretKey: secureKey,
+          publicKeyHex: publicKeyHex,
+        );
+      } else {
+        throw Exception("Private key not found for this account.");
+      }
+    } catch (e) {
+      state = KeyState(
+        isKeySetupComplete: false,
+        isLoading: false,
+        errorMessage: 'Login failed: $e',
       );
     }
   }
@@ -85,6 +110,7 @@ class KeyController extends Notifier<KeyState> {
       });
 
       await storage.saveKeyPair(publicKey: pubKeyHex, privateKey: privKeyHex);
+      await storage.setLastActiveAccount(pubKeyHex);
 
       state = KeyState(
         isKeySetupComplete: true,
@@ -120,41 +146,59 @@ class KeyController extends Notifier<KeyState> {
         publicKey: pubKeyHex,
         privateKey: hexPrivateKey,
       );
+      await storage.setLastActiveAccount(pubKeyHex);
 
       state = KeyState(
         isKeySetupComplete: true,
         isLoading: false,
         activeSecretKey: seedKey,
+        publicKeyHex: pubKeyHex,
       );
     } catch (e) {
       seedKey?.dispose();
 
-      state = KeyState(
-        errorMessage: 'Invalid private key. Please check your hex string.',
-        isLoading: false,
-      );
+      state = KeyState(errorMessage: 'Invalid private key.', isLoading: false);
     } finally {
       derivedKeyPair?.secretKey.dispose();
     }
   }
 
-  Future<void> wipeData() async {
+  Future<void> logout() async {
+    state.activeSecretKey?.dispose();
+    await ref.read(secureStorageProvider).removeLastActiveAccount();
+    state = KeyState(isLoading: false, isKeySetupComplete: false);
+  }
+
+  Future<void> deleteAccount(String publicKey) async {
     state = KeyState(isLoading: true);
 
     try {
-      await ref.read(secureStorageProvider).wipeAllData();
+      await ref.read(secureStorageProvider).wipeAccountData(publicKey);
 
-      //TODO: delete the db file
+      final dbFolder = await getApplicationCacheDirectory();
+      final file = File(p.join(dbFolder.path, 'secure_chat_$publicKey.sqlite'));
+      if (await file.exists()) {
+        await file.delete();
+      }
 
-      state.activeSecretKey?.dispose();
-
-      state = KeyState(isLoading: false, isKeySetupComplete: false);
+      if (state.publicKeyHex == publicKey) {
+        state.activeSecretKey?.dispose();
+        state = KeyState(isLoading: false, isKeySetupComplete: false);
+      } else {
+        state = KeyState(
+          isKeySetupComplete: true,
+          isLoading: false,
+          activeSecretKey: state.activeSecretKey,
+          publicKeyHex: state.publicKeyHex,
+        );
+      }
     } catch (e) {
       state = KeyState(
-        errorMessage: 'Failed to wipe data: $e',
+        errorMessage: 'Failed to delete account: $e',
         isLoading: false,
-        isKeySetupComplete: true,
+        isKeySetupComplete: state.isKeySetupComplete,
         activeSecretKey: state.activeSecretKey,
+        publicKeyHex: state.publicKeyHex,
       );
     }
   }

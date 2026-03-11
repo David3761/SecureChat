@@ -10,7 +10,10 @@ part 'app_database.g.dart';
 
 @DriftDatabase(tables: [Contacts, Messages])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase(String encryptionKey) : super(_openConnection(encryptionKey));
+  AppDatabase(String publicKey, String encryptionKey)
+    : super(_openConnection(publicKey, encryptionKey)) {
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  }
 
   @override
   int get schemaVersion => 2;
@@ -33,10 +36,10 @@ class AppDatabase extends _$AppDatabase {
   }
 }
 
-LazyDatabase _openConnection(String encryptionKey) {
+LazyDatabase _openConnection(String publicKey, String encryptionKey) {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'secure_chat.sqlite'));
+    final file = File(p.join(dbFolder.path, 'secure_chat_$publicKey.sqlite'));
 
     return NativeDatabase.createInBackground(
       file,

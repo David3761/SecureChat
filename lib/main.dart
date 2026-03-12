@@ -28,7 +28,7 @@ class SecureChatApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Zero-Knowledge Chat',
       theme: AppTheme.lightTheme,
-      initialRoute: AppRouter.onboarding,
+      initialRoute: AppRouter.authWrapper,
       onGenerateRoute: AppRouter.generateRoute,
     );
   }

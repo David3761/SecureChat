@@ -96,8 +96,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen(keyControllerProvider, (previous, next) {
-      if (next.isKeySetupComplete) {
-        Navigator.of(context).pushReplacementNamed(AppRouter.contacts);
+      final wasNotLoggedIn = previous?.isKeySetupComplete == false;
+      final isNowLoggedIn = next.isKeySetupComplete == true;
+
+      if (wasNotLoggedIn && isNowLoggedIn) {
+        Navigator.of(context).pushReplacementNamed(AppRouter.mainScreen);
       }
     });
 

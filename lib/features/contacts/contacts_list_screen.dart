@@ -2,6 +2,7 @@ import 'package:chat/core/app_router.dart';
 import 'package:chat/core/network/connection_controller.dart';
 import 'package:chat/core/providers.dart';
 import 'package:chat/core/widgets/accounts_drawer.dart';
+import 'package:chat/core/widgets/contact_list_item.dart';
 import 'package:drift_db_viewer/drift_db_viewer.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -97,40 +98,9 @@ class ContactsListScreen extends ConsumerWidget {
             itemCount: contacts.length,
             itemBuilder: (context, index) {
               final contact = contacts[index];
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: Theme.of(
-                    context,
-                  ).primaryColor.withValues(alpha: 0.1),
-                  child: Icon(
-                    Icons.person,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                title: Text(
-                  contact.alias,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Text(
-                  contact.publicKey,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontFamily: 'monospace'),
-                ),
-                trailing: IconButton(
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    color: Colors.redAccent,
-                  ),
-                  onPressed: () => _confirmDelete(context, ref, contact),
-                ),
-                onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    AppRouter.chat,
-                    arguments: contact,
-                  );
-                },
+              return ContactListItem(
+                contact: contact,
+                confirmDelete: _confirmDelete,
               );
             },
           );

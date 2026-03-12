@@ -81,6 +81,9 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.background,
       primaryColor: AppColors.primaryBlue,
       textTheme: textTheme,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      splashFactory: NoSplash.splashFactory,
 
       colorScheme: const ColorScheme.light(
         primary: AppColors.primaryBlue,
@@ -157,6 +160,12 @@ class AppTheme {
           ),
           textStyle: textTheme.titleMedium,
         ),
+      ),
+
+      dividerTheme: const DividerThemeData(
+        color: Color.fromARGB(134, 158, 158, 158),
+        thickness: 1,
+        space: 1,
       ),
     );
   }

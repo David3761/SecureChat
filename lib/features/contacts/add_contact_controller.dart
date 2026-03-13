@@ -1,3 +1,4 @@
+import 'package:chat/features/chat/chat_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'contacts_repository.dart';
 
@@ -33,12 +34,23 @@ class AddContactController extends Notifier<AddContactState> {
       final repository = await ref.read(contactsRepositoryProvider.future);
       await repository.addContact(alias: alias.trim(), publicKey: cleanKey);
 
-      state = AddContactState(isSuccess: true);
+      final newContact = await repository.getContactByPublicKey(publicKey);
+      if (newContact != null) {
+        final chatController = ref.read(
+          chatControllerProvider(newContact.id).notifier,
+        );
+
+        await chatController.sendProfileSync(newContact);
+      }
+
+      state = AddContactState(isSuccess: true, isLoading: false);
     } catch (e) {
       if (e.toString().contains('UNIQUE constraint failed')) {
         state = AddContactState(error: 'You have already added this contact.');
       } else {
-        state = AddContactState(error: 'Failed to save contact: $e');
+        state = AddContactState(
+          error: 'Failed to save contact or send the profile_sync: $e',
+        );
       }
     }
   }

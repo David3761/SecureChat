@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/database/app_database.dart';
@@ -29,6 +30,11 @@ class ContactsRepository {
     return await (_db.select(
       _db.contacts,
     )..where((row) => row.publicKey.equals(publicKey))).getSingleOrNull();
+  }
+
+  Future<void> updateAlias(int contactId, String newAlias) async {
+    await (_db.update(_db.contacts)..where((row) => row.id.equals(contactId)))
+        .write(ContactsCompanion(alias: Value(newAlias)));
   }
 }
 

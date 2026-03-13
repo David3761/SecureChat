@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:chat/features/chat/chat_repository.dart';
 import 'package:chat/features/contacts/contacts_repository.dart';
@@ -107,13 +108,32 @@ class ConnectionController extends Notifier<ConnectionState> {
         theirPublicKeyHex: senderPubKey,
       );
 
-      final chatRepo = await ref.read(chatRepositoryProvider.future);
-      await chatRepo.saveMessage(
-        messageId: messageId,
-        contactId: contact.id,
-        content: decryptedPlaintext,
-        isFromMe: false,
-      );
+      try {
+        final Map<String, dynamic> data = jsonDecode(decryptedPlaintext);
+
+        if (data['type'] == 'text') {
+          final chatRepo = await ref.read(chatRepositoryProvider.future);
+          await chatRepo.saveMessage(
+            messageId: messageId,
+            contactId: contact.id,
+            content: data['content'],
+            isFromMe: false,
+          );
+        } else if (data['type'] == 'profile_sync') {
+          //TODO: after profile sync, I appear directly on his list screen. there needs to be an "accept request mechanism"
+          //TODO: separate concerns here
+          final newAlias = data['nickname'] as String;
+          await contactsRepo.updateAlias(contact.id, newAlias);
+        }
+      } catch (formatException) {
+        final chatRepo = await ref.read(chatRepositoryProvider.future);
+        await chatRepo.saveMessage(
+          messageId: messageId,
+          contactId: contact.id,
+          content: decryptedPlaintext,
+          isFromMe: false,
+        );
+      }
 
       debugPrint(
         'Successfully decrypted and saved incoming message from ${contact.alias}.',

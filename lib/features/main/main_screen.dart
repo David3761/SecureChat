@@ -1,4 +1,5 @@
 import 'package:chat/core/theme/theme.dart';
+import 'package:chat/features/profile/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../contacts/contacts_list_screen.dart';
@@ -13,7 +14,10 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = [const ContactsListScreen(), const Placeholder()];
+  final List<Widget> _pages = [
+    const ContactsListScreen(),
+    const ProfileScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {

@@ -170,7 +170,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           child: ListTile(
                             leading: const Icon(Icons.person),
                             title: Text(
-                              '${pubKey.substring(0, 12)}...',
+                              state.nickname ?? 'Unknown account',
                               style: const TextStyle(
                                 fontFamily: 'Courier',
                                 fontWeight: FontWeight.bold,

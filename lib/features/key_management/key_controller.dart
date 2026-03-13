@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -19,6 +20,7 @@ class KeyState {
   final bool isKeySetupComplete;
   final SecureKey? activeSecretKey;
   final String? publicKeyHex;
+  final String? nickname;
 
   KeyState({
     this.isLoading = true,
@@ -26,6 +28,7 @@ class KeyState {
     this.isKeySetupComplete = false,
     this.activeSecretKey,
     this.publicKeyHex,
+    this.nickname,
   });
 }
 
@@ -70,6 +73,7 @@ class KeyController extends Notifier<KeyState> {
       final storage = ref.read(secureStorageProvider);
 
       final privateKey = await storage.getPrivateKey(publicKeyHex);
+      final nickname = await storage.getNickname(publicKeyHex);
 
       if (privateKey != null && privateKey.isNotEmpty) {
         final SecureKey secureKey = crypto.createSecureKeyFromHex(privateKey);
@@ -80,6 +84,7 @@ class KeyController extends Notifier<KeyState> {
           isLoading: false,
           activeSecretKey: secureKey,
           publicKeyHex: publicKeyHex,
+          nickname: nickname,
         );
       } else {
         throw Exception("Private key not found for this account.");
@@ -111,6 +116,7 @@ class KeyController extends Notifier<KeyState> {
 
       await storage.saveKeyPair(publicKey: pubKeyHex, privateKey: privKeyHex);
       await storage.setLastActiveAccount(pubKeyHex);
+      await storage.saveNickname(pubKeyHex, "User${pubKeyHex.substring(0, 5)}");
 
       state = KeyState(
         isKeySetupComplete: true,
@@ -147,6 +153,7 @@ class KeyController extends Notifier<KeyState> {
         privateKey: hexPrivateKey,
       );
       await storage.setLastActiveAccount(pubKeyHex);
+      await storage.saveNickname(pubKeyHex, "User${pubKeyHex.substring(0, 5)}");
 
       state = KeyState(
         isKeySetupComplete: true,
@@ -160,6 +167,25 @@ class KeyController extends Notifier<KeyState> {
       state = KeyState(errorMessage: 'Invalid private key.', isLoading: false);
     } finally {
       derivedKeyPair?.secretKey.dispose();
+    }
+  }
+
+  Future<void> updateNickname(String newNickname) async {
+    final pubKey = state.publicKeyHex;
+    if (pubKey == null) throw Exception('Public key is null.');
+
+    try {
+      await ref.read(secureStorageProvider).saveNickname(pubKey, newNickname);
+
+      state = KeyState(
+        isKeySetupComplete: state.isKeySetupComplete,
+        isLoading: false,
+        activeSecretKey: state.activeSecretKey,
+        publicKeyHex: state.publicKeyHex,
+        nickname: newNickname,
+      );
+    } catch (e) {
+      debugPrint('Updating the nickname failed.');
     }
   }
 

@@ -17,6 +17,7 @@ class SecureStorageService {
 
   String _privateKeyId(String publicKey) => '${publicKey}_private_key';
   String _dbKeyId(String publicKey) => '${publicKey}_db_encryption_key';
+  String _nicknameId(String publicKey) => '${publicKey}_nickname';
 
   Future<List<String>> getKnownAccounts() async {
     final str = await _storage.read(key: _knownAccountsKey);
@@ -53,6 +54,14 @@ class SecureStorageService {
     return await _storage.read(key: _privateKeyId(publicKey));
   }
 
+  Future<String?> getNickname(String publicKey) async {
+    return await _storage.read(key: _nicknameId(publicKey));
+  }
+
+  Future<void> saveNickname(String publicKey, String nickname) async {
+    await _storage.write(key: _nicknameId(publicKey), value: nickname);
+  }
+
   Future<String> getOrCreateDatabaseKey(String publicKey) async {
     final targetKey = _dbKeyId(publicKey);
     String? dbKey = await _storage.read(key: targetKey);
@@ -71,6 +80,7 @@ class SecureStorageService {
   Future<void> wipeAccountData(String publicKey) async {
     await _storage.delete(key: _privateKeyId(publicKey));
     await _storage.delete(key: _dbKeyId(publicKey));
+    await _storage.delete(key: _nicknameId(publicKey));
 
     final accounts = await getKnownAccounts();
     accounts.remove(publicKey);
@@ -80,5 +90,7 @@ class SecureStorageService {
     if (lastActive == publicKey) await removeLastActiveAccount();
   }
 
-  //TODO: wipealldata() nuke everyhting
+  Future<void> wipeAllData() async {
+    await _storage.deleteAll();
+  }
 }

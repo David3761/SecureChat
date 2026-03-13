@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
   static const Color primaryBlue = Color(0xFF4A86F7);
   static const Color title = Color(0xFF35353D);
   static const Color grey = Color(0xFF8B98A9);
+  static const Color secondaryBackground = Color(0xFFF6F5F3);
+  static const Color onSecondaryBackground = Color(0xFF656462);
   static const Color body = Color(0xFF6A7185);
   static const Color stroke = Color(0xFFE9EDF1);
-  static const Color background = Color(0xFFF5F7FA);
+  static const Color background = Color(0xFFFFFFFF);
   static const Color white = Color(0xFFFFFFFF);
+  static const Color red = Color(0xFFD94841);
+  static const Color skyBlue = Color(0xFF57B6F0);
 
   static const Color darkBackground = Color(0xFF121212);
 
-  static const Color skyBlue = Color(0xFF57B6F0);
-  static const Color red = Color(0xFFD94841);
-  static const Color orange = Color(0xFFF2A84C);
-  static const Color green = Color(0xFF83BF6E);
+  static const List<Color> avatarColors = [
+    Color(0xFF57B6F0),
+    Color(0xFFD94841),
+    Color(0xFFF2A84C),
+    Color(0xFF83BF6E),
+    Color(0xFF670FCD),
+  ];
 
   static const Gradient blueGradient = LinearGradient(
     colors: [Color(0xFF4A86F7), Color(0xFF2448B1)],
@@ -57,6 +65,12 @@ class AppTheme {
         fontSize: 16,
       ),
 
+      titleSmall: TextStyle(
+        color: AppColors.onSecondaryBackground,
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+      ),
+
       bodyLarge: TextStyle(color: AppColors.body, fontSize: 16),
 
       bodyMedium: TextStyle(color: AppColors.body, fontSize: 14),
@@ -80,7 +94,7 @@ class AppTheme {
       useMaterial3: true,
       scaffoldBackgroundColor: AppColors.background,
       primaryColor: AppColors.primaryBlue,
-      textTheme: textTheme,
+      textTheme: GoogleFonts.interTextTheme(textTheme),
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
       splashFactory: NoSplash.splashFactory,
@@ -102,7 +116,7 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         shadowColor: Colors.black12,
         centerTitle: true,
-        elevation: 4,
+        elevation: 0,
       ),
 
       textSelectionTheme: const TextSelectionThemeData(

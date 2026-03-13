@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 
 class ContactListItem extends ConsumerStatefulWidget {
@@ -35,7 +36,7 @@ class _ContactListItemState extends ConsumerState<ContactListItem> {
     if (localDateTime.isAfter(today)) {
       return timeString;
     } else if (localDateTime.isAfter(yesterday)) {
-      return 'yesterday';
+      return 'Yesterday';
     } else if (diffInDays <= 7) {
       return DateFormat('EEEE').format(localDateTime).toLowerCase();
     } else {
@@ -46,6 +47,9 @@ class _ContactListItemState extends ConsumerState<ContactListItem> {
   @override
   Widget build(BuildContext context) {
     final messagesStream = ref.watch(chatStreamProvider(widget.contact.id));
+    final int colorIndex =
+        widget.contact.alias.hashCode.abs() % AppColors.avatarColors.length;
+    final Color avatarColor = AppColors.avatarColors[colorIndex];
 
     return GestureDetector(
       onTap: () {
@@ -92,7 +96,7 @@ class _ContactListItemState extends ConsumerState<ContactListItem> {
               ],
             ),
             child: Container(
-              padding: EdgeInsets.only(top: 16, right: 16, left: 16),
+              padding: EdgeInsets.only(top: 16),
               width: double.infinity,
               alignment: Alignment.center,
               child: Column(
@@ -102,13 +106,11 @@ class _ContactListItemState extends ConsumerState<ContactListItem> {
                     children: [
                       CircleAvatar(
                         minRadius: 32,
-                        backgroundColor: Theme.of(
-                          context,
-                        ).primaryColor.withValues(alpha: 0.1),
+                        backgroundColor: avatarColor.withValues(alpha: 0.1),
                         //TODO: profile pic
-                        child: Icon(
-                          Icons.person,
-                          color: Theme.of(context).primaryColor,
+                        child: FaIcon(
+                          FontAwesomeIcons.solidUser,
+                          color: avatarColor,
                         ),
                       ),
                       SizedBox(width: 16),
@@ -127,7 +129,7 @@ class _ContactListItemState extends ConsumerState<ContactListItem> {
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium!
-                                        .copyWith(fontWeight: FontWeight.w700),
+                                        .copyWith(fontWeight: FontWeight.w600),
                                   ),
                                   Text(
                                     messagesStream.maybeWhen(
@@ -166,7 +168,7 @@ class _ContactListItemState extends ConsumerState<ContactListItem> {
               ),
             ),
           ),
-          Divider(indent: 96),
+          Divider(indent: 80),
         ],
       ),
     );

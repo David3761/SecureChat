@@ -6,6 +6,7 @@ class AppColors {
   static const Color title = Color(0xFF35353D);
   static const Color grey = Color(0xFF8B98A9);
   static const Color secondaryBackground = Color(0xFFF6F5F3);
+  static const Color darkerSecondaryBackground = Color(0xFFE9E8E5);
   static const Color onSecondaryBackground = Color(0xFF656462);
   static const Color body = Color(0xFF6A7185);
   static const Color stroke = Color(0xFFE9EDF1);
@@ -40,53 +41,104 @@ class AppColors {
 class AppTheme {
   static ThemeData get lightTheme {
     const textTheme = TextTheme(
+      // DISPLAYS: Huge, expressive headers (Onboarding, Empty States)
       displayLarge: TextStyle(
         color: AppColors.title,
         fontWeight: FontWeight.w800,
         fontSize: 40,
-        letterSpacing: -1.0,
+        letterSpacing: -1.2,
+        height: 1.1,
       ),
-
       displayMedium: TextStyle(
         color: AppColors.title,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w800,
         fontSize: 32,
+        letterSpacing: -0.8,
+        height: 1.15,
+      ),
+      displaySmall: TextStyle(
+        color: AppColors.title,
+        fontWeight: FontWeight.w700,
+        fontSize: 28,
+        letterSpacing: -0.6,
       ),
 
+      // HEADLINES: Main screen headers (e.g., "Chats", "Profile")
+      headlineLarge: TextStyle(
+        color: AppColors.title,
+        fontWeight: FontWeight.w700,
+        fontSize: 24,
+        letterSpacing: -0.5,
+      ),
+      headlineMedium: TextStyle(
+        color: AppColors.title,
+        fontWeight: FontWeight.bold,
+        fontSize: 20,
+        letterSpacing: -0.3,
+      ),
+      headlineSmall: TextStyle(
+        color: AppColors.title,
+        fontWeight: FontWeight.w600,
+        fontSize: 18,
+        letterSpacing: -0.2,
+      ),
+
+      // TITLES: Dialog headers, AppBars, ListTile titles
       titleLarge: TextStyle(
         color: AppColors.title,
         fontWeight: FontWeight.w600,
         fontSize: 20,
       ),
-
       titleMedium: TextStyle(
         color: AppColors.title,
         fontWeight: FontWeight.w600,
         fontSize: 16,
       ),
-
       titleSmall: TextStyle(
         color: AppColors.onSecondaryBackground,
-        fontSize: 16,
-        fontWeight: FontWeight.w400,
-      ),
-
-      bodyLarge: TextStyle(color: AppColors.body, fontSize: 16),
-
-      bodyMedium: TextStyle(color: AppColors.body, fontSize: 14),
-
-      bodySmall: TextStyle(color: AppColors.stroke, fontSize: 14),
-
-      labelLarge: TextStyle(
-        color: AppColors.primaryBlue,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.w500,
         fontSize: 14,
       ),
 
+      // BODY: Standard paragraphs, list item subtitles
+      bodyLarge: TextStyle(
+        color: AppColors.title,
+        fontWeight: FontWeight.w400,
+        fontSize: 16,
+        height: 1.5,
+      ),
+      bodyMedium: TextStyle(
+        color: AppColors.body,
+        fontWeight: FontWeight.w400,
+        fontSize: 14,
+        height: 1.4,
+      ),
+      bodySmall: TextStyle(
+        color: AppColors.grey,
+        fontWeight: FontWeight.w400,
+        fontSize: 12,
+        letterSpacing: 0.2,
+      ),
+
+      // LABELS: Buttons, overlines, tiny status text
+      labelLarge: TextStyle(
+        color: AppColors.primaryBlue,
+        fontWeight: FontWeight.w700,
+        fontSize: 14,
+        letterSpacing: 0.1,
+      ),
+      labelMedium: TextStyle(
+        color: AppColors.body,
+        fontWeight: FontWeight.w600,
+        fontSize: 12,
+        letterSpacing: 0.2,
+      ),
       labelSmall: TextStyle(
         color: AppColors.red,
-        fontWeight: FontWeight.w500,
-        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        fontSize: 11,
+        letterSpacing: 0.3,
+        height: 1.2,
       ),
     );
 
@@ -177,7 +229,7 @@ class AppTheme {
       ),
 
       dividerTheme: const DividerThemeData(
-        color: Color.fromARGB(134, 158, 158, 158),
+        color: Color.fromARGB(104, 158, 158, 158),
         thickness: 1,
         space: 1,
       ),

@@ -9,7 +9,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 
-class ContactListItem extends ConsumerStatefulWidget {
+class ContactListItem extends ConsumerWidget {
   final Contact contact;
   final Function(BuildContext, WidgetRef, Contact) confirmDelete;
 
@@ -19,11 +19,6 @@ class ContactListItem extends ConsumerStatefulWidget {
     required this.confirmDelete,
   });
 
-  @override
-  ConsumerState<ContactListItem> createState() => _ContactListItemState();
-}
-
-class _ContactListItemState extends ConsumerState<ContactListItem> {
   String _formatDateTime(DateTime dateTime) {
     final now = DateTime.now();
     final localDateTime = dateTime.toLocal();
@@ -45,28 +40,29 @@ class _ContactListItemState extends ConsumerState<ContactListItem> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final messagesStream = ref.watch(chatStreamProvider(widget.contact.id));
+  Widget build(BuildContext context, WidgetRef ref) {
+    final messagesStream = ref.watch(chatStreamProvider(contact.id));
+
     final int colorIndex =
-        widget.contact.alias.hashCode.abs() % AppColors.avatarColors.length;
+        contact.alias.hashCode.abs() % AppColors.avatarColors.length;
     final Color avatarColor = AppColors.avatarColors[colorIndex];
 
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, AppRouter.chat, arguments: widget.contact);
+        Navigator.pushNamed(context, AppRouter.chat, arguments: contact);
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Slidable(
-            key: ValueKey(widget.contact.id),
+            key: ValueKey(contact.id),
             endActionPane: ActionPane(
               motion: const ScrollMotion(),
               extentRatio: 0.6,
               children: [
                 CustomSlidableAction(
                   onPressed: (context) {
-                    widget.confirmDelete(context, ref, widget.contact);
+                    confirmDelete(context, ref, contact);
                   },
                   backgroundColor: AppColors.red,
                   foregroundColor: AppColors.white,
@@ -96,7 +92,7 @@ class _ContactListItemState extends ConsumerState<ContactListItem> {
               ],
             ),
             child: Container(
-              padding: EdgeInsets.only(top: 16),
+              padding: const EdgeInsets.only(top: 16),
               width: double.infinity,
               alignment: Alignment.center,
               child: Column(
@@ -106,14 +102,14 @@ class _ContactListItemState extends ConsumerState<ContactListItem> {
                     children: [
                       CircleAvatar(
                         minRadius: 32,
-                        backgroundColor: avatarColor.withValues(alpha: 0.1),
+                        backgroundColor: avatarColor.withValues(alpha: 0.2),
                         //TODO: profile pic
                         child: FaIcon(
                           FontAwesomeIcons.solidUser,
                           color: avatarColor,
                         ),
                       ),
-                      SizedBox(width: 16),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: SizedBox(
                           height: 64,
@@ -125,34 +121,59 @@ class _ContactListItemState extends ConsumerState<ContactListItem> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    widget.contact.alias,
+                                    contact.alias,
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium!
                                         .copyWith(fontWeight: FontWeight.w600),
                                   ),
-                                  Text(
-                                    messagesStream.maybeWhen(
-                                      data: (messages) => messages.isNotEmpty
-                                          ? _formatDateTime(
-                                              messages.first.timestamp,
-                                            )
-                                          : '',
-                                      loading: () => 'Loading...',
-                                      error: (_, _) => 'Error',
-                                      orElse: () => '',
-                                    ),
+                                  messagesStream.maybeWhen(
+                                    data: (messages) {
+                                      if (messages.isEmpty) {
+                                        return const SizedBox.shrink();
+                                      }
+
+                                      final latestMessage = messages.first;
+
+                                      // TODO: Update this to read from the Message model
+                                      final bool isUnread = true;
+
+                                      //TODO: Ugly
+                                      return Row(
+                                        children: [
+                                          if (isUnread) ...[
+                                            Container(
+                                              width: 10,
+                                              height: 10,
+                                              decoration: const BoxDecoration(
+                                                color: AppColors.primaryBlue,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                          ],
+                                          Text(
+                                            _formatDateTime(
+                                              latestMessage.timestamp,
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                    loading: () => const Text('...'),
+                                    error: (_, _) => const Text('Error'),
+                                    orElse: () => const SizedBox.shrink(),
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 4),
+                              const SizedBox(height: 4),
                               Text(
                                 messagesStream.maybeWhen(
                                   data: (messages) => messages.isNotEmpty
                                       ? messages.first.content
                                       : 'No messages',
                                   loading: () => 'Loading...',
-                                  error: (_, _) => 'Error',
+                                  error: (_, _) => 'Error loading messages',
                                   orElse: () => '',
                                 ),
                                 maxLines: 1,
@@ -168,7 +189,7 @@ class _ContactListItemState extends ConsumerState<ContactListItem> {
               ),
             ),
           ),
-          Divider(indent: 80),
+          const Divider(indent: 80),
         ],
       ),
     );

@@ -1,6 +1,10 @@
+import 'package:chat/core/theme/theme.dart';
+import 'package:chat/core/widgets/settings_option.dart';
+import 'package:chat/core/widgets/titled_settings_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/app_router.dart';
@@ -136,176 +140,363 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  void _showQrModal(String activePubKey) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'My QR Code',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 40),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: QrImageView(
+                  data: activePubKey,
+                  version: QrVersions.auto,
+                  size: 240.0,
+                  backgroundColor: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 40),
+              const Text(
+                'OR SEND YOUR PUBLIC KEY',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: () => _copyToClipboard(activePubKey, 'Public Key'),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.grey.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          activePubKey,
+                          style: const TextStyle(
+                            fontFamily: 'Courier',
+                            fontSize: 13,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      const Icon(Icons.copy, size: 20, color: AppColors.grey),
+                    ],
+                  ),
+                ),
+              ),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Done'),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final keyState = ref.watch(keyControllerProvider);
     final activePubKey = keyState.publicKeyHex ?? '';
     final activeNickname = keyState.nickname ?? 'My Profile';
+    final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My Profile'), elevation: 0),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              color: Theme.of(context).cardColor,
-              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+      backgroundColor: AppColors.secondaryBackground,
+      body: CustomScrollView(
+        slivers: [
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: ProfileHeaderDelegate(
+              paddingTop: topPadding,
+              activeNickname: activeNickname,
+              onEditNickname: () => _showEditNicknameDialog(activeNickname),
+              onShowQr: () => _showQrModal(activePubKey),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 22.0),
+            sliver: SliverToBoxAdapter(
               child: Column(
                 children: [
-                  const CircleAvatar(
-                    radius: 40,
-                    backgroundColor: Colors.blueAccent,
-                    child: Icon(Icons.shield, size: 40, color: Colors.white),
-                  ),
                   const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        activeNickname,
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                  TitledSettingsSection(
+                    title: "Switch profile",
+                    options: !_isLoadingAccounts && _accountNicknames.length > 1
+                        ? [
+                            ..._accountNicknames.entries
+                                .where((entry) => entry.key != activePubKey)
+                                .map((entry) {
+                                  final pubKey = entry.key;
+                                  final nickname = entry.value;
+                                  return ListTile(
+                                    key: ValueKey(pubKey),
+                                    leading: const CircleAvatar(
+                                      backgroundColor: Colors.grey,
+                                      child: Icon(
+                                        Icons.person,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      nickname,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      '${pubKey.substring(0, 8)}...${pubKey.substring(pubKey.length - 8)}',
+                                      style: const TextStyle(
+                                        fontFamily: 'Courier',
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    onTap: () => _handleSwitchAccount(pubKey),
+                                  );
+                                }),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8.0),
+                              child: ListTile(
+                                leading: const Icon(Icons.add),
+                                title: Padding(
+                                  padding: const EdgeInsets.only(left: 8.0),
+                                  child: Text(
+                                    'Add Profile',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium!
+                                        .copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                onTap: _handleLogout,
+                              ),
+                            ),
+                          ]
+                        : [
+                            ListTile(
+                              leading: const Icon(Icons.add),
+                              title: const Text('Add Profile'),
+                              onTap: _handleLogout,
+                            ),
+                          ],
+                  ),
+                  SizedBox(height: 32),
+                  TitledSettingsSection(
+                    title: 'Security',
+                    options: [
+                      SettingsOption(
+                        title: 'Message Expiry',
+                        icon: FontAwesomeIcons.clock,
+                        callback: () {},
                       ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.edit,
-                          size: 20,
-                          color: Colors.grey,
-                        ),
-                        onPressed: () =>
-                            _showEditNicknameDialog(activeNickname),
+                      SettingsOption(
+                        title: 'Log Out',
+                        icon: FontAwesomeIcons.arrowRightFromBracket,
+                        callback: () {},
+                        hasArrow: false,
+                        red: true,
+                      ),
+                      SettingsOption(
+                        title: 'Delete Account',
+                        icon: FontAwesomeIcons.triangleExclamation,
+                        callback: () {},
+                        hasArrow: false,
+                        red: true,
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 24),
-                  if (activePubKey.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: QrImageView(
-                        data: activePubKey,
-                        version: QrVersions.auto,
-                        size: 200.0,
-                        backgroundColor: Colors.white,
-                      ),
-                    ),
-
-                  const SizedBox(height: 24),
-                  const Text(
-                    'YOUR PUBLIC KEY',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () => _copyToClipboard(activePubKey, 'Public Key'),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Colors.grey.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              activePubKey,
-                              style: const TextStyle(
-                                fontFamily: 'Courier',
-                                fontSize: 13,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.copy, size: 20, color: Colors.grey),
-                        ],
-                      ),
-                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-            if (!_isLoadingAccounts && _accountNicknames.length > 1) ...[
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'SWITCH PROFILE',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              ..._accountNicknames.entries.map((entry) {
-                final pubKey = entry.key;
-                final nickname = entry.value;
-                final isActive = pubKey == activePubKey;
-
-                if (isActive) {
-                  return const SizedBox.shrink();
-                }
-
-                return ListTile(
-                  leading: const CircleAvatar(
-                    backgroundColor: Colors.grey,
-                    child: Icon(Icons.person, color: Colors.white),
-                  ),
-                  title: Text(
-                    nickname,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    '${pubKey.substring(0, 8)}...${pubKey.substring(pubKey.length - 8)}',
-                    style: const TextStyle(fontFamily: 'Courier', fontSize: 12),
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      color: Colors.redAccent,
-                    ),
-                    onPressed: () => _handleDeleteAccount(pubKey),
-                  ),
-                  onTap: () => _handleSwitchAccount(pubKey),
-                );
-              }),
-              const Divider(),
-            ],
-
-            ListTile(
-              leading: const Icon(Icons.add),
-              title: const Text('Add Another Profile'),
-              onTap: _handleLogout,
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.redAccent),
-              title: const Text(
-                'Log Out',
-                style: TextStyle(color: Colors.redAccent),
-              ),
-              onTap: _handleLogout,
-            ),
-            const SizedBox(height: 40),
-          ],
-        ),
+          ),
+        ],
       ),
     );
+  }
+}
+
+class ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double paddingTop;
+  final String activeNickname;
+  final VoidCallback onEditNickname;
+  final VoidCallback onShowQr;
+
+  ProfileHeaderDelegate({
+    required this.paddingTop,
+    required this.activeNickname,
+    required this.onEditNickname,
+    required this.onShowQr,
+  });
+
+  @override
+  double get minExtent => kToolbarHeight + paddingTop;
+
+  @override
+  double get maxExtent => 250.0 + paddingTop;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    final shrinkPercentage = (shrinkOffset / (maxExtent - minExtent)).clamp(
+      0.0,
+      1.0,
+    );
+    final expandedOpacity = (1 - shrinkPercentage * 1.5).clamp(0.0, 1.0);
+    final collapsedOpacity = (shrinkPercentage * 2 - 1).clamp(0.0, 1.0);
+
+    return Container(
+      color: AppColors.secondaryBackground,
+      padding: EdgeInsets.only(top: paddingTop),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Opacity(
+            opacity: expandedOpacity,
+            child: SingleChildScrollView(
+              physics: const NeverScrollableScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 64,
+                  horizontal: 24,
+                ),
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 58,
+                      backgroundColor: AppColors.primaryBlue.withValues(
+                        alpha: 0.2,
+                      ),
+                      child: const FaIcon(
+                        FontAwesomeIcons.solidUser,
+                        size: 38,
+                        color: AppColors.primaryBlue,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(width: 48),
+                        Text(
+                          activeNickname,
+                          style: Theme.of(context).textTheme.displayMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.edit,
+                            size: 20,
+                            color: Colors.grey,
+                          ),
+                          onPressed: onEditNickname,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Opacity(
+            opacity: collapsedOpacity,
+            child: Container(
+              height: kToolbarHeight,
+              alignment: Alignment.center,
+              child: Text(
+                activeNickname,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 12,
+            right: 12,
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: const BoxDecoration(
+                color: AppColors.darkerSecondaryBackground,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                icon: const Icon(
+                  Icons.qr_code,
+                  color: AppColors.title,
+                  size: 20,
+                ),
+                onPressed: onShowQr,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant ProfileHeaderDelegate oldDelegate) {
+    return activeNickname != oldDelegate.activeNickname ||
+        paddingTop != oldDelegate.paddingTop;
   }
 }

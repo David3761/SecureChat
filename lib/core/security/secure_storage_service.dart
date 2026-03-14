@@ -19,6 +19,7 @@ class SecureStorageService {
   String _dbKeyId(String publicKey) => '${publicKey}_db_encryption_key';
   String _nicknameId(String publicKey) => '${publicKey}_nickname';
 
+  //TODO add the nickname to the account data
   Future<List<String>> getKnownAccounts() async {
     final str = await _storage.read(key: _knownAccountsKey);
     if (str == null) return [];

@@ -21,7 +21,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = Theme.of(context).primaryColor;
+    final activeColor = AppColors.title;
     final inactiveColor = AppColors.grey;
 
     return Scaffold(
@@ -41,6 +41,8 @@ class _MainScreenState extends State<MainScreen> {
           unselectedFontSize: 12,
           type: BottomNavigationBarType.fixed,
           currentIndex: _selectedIndex,
+          selectedItemColor: activeColor,
+          unselectedItemColor: inactiveColor,
           onTap: (index) => setState(() => _selectedIndex = index),
           items: [
             BottomNavigationBarItem(

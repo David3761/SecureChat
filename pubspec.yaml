@@ -80,6 +80,8 @@ flutter:
     - assets/trash_icon.svg
     - assets/gear_icon.svg
     - assets/right_arrow.svg
+    - assets/tor.svg
+    - assets/lock.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

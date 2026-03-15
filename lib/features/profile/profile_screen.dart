@@ -1,9 +1,12 @@
+import 'dart:ui';
+
 import 'package:chat/core/theme/theme.dart';
 import 'package:chat/core/widgets/settings_option.dart';
 import 'package:chat/core/widgets/titled_settings_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -267,6 +270,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               activeNickname: activeNickname,
               onEditNickname: () => _showEditNicknameDialog(activeNickname),
               onShowQr: () => _showQrModal(activePubKey),
+              backgroundColor: AppColors.secondaryBackground,
+              scrolledColor: AppColors.secondaryBackground.withValues(
+                alpha: 0.10,
+              ),
             ),
           ),
           SliverPadding(
@@ -335,28 +342,60 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             ),
                           ],
                   ),
-                  SizedBox(height: 32),
                   TitledSettingsSection(
                     title: 'Security',
                     options: [
                       SettingsOption(
-                        title: 'Message Expiry',
-                        icon: FontAwesomeIcons.clock,
+                        title: 'Dissappearing messages',
+                        iconData: FontAwesomeIcons.clock,
+                        callback: () {},
+                      ),
+                      SettingsOption(
+                        title: 'App lock',
+                        customIcon: SvgPicture.asset(
+                          'assets/lock.svg',
+                          width: 22,
+                          height: 22,
+                          colorFilter: ColorFilter.mode(
+                            Theme.of(context).iconTheme.color!,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                        callback: () {},
+                      ),
+                      //TODO: prevent ss
+                      SettingsOption(
+                        title: 'Route through TOR',
+                        customIcon: SvgPicture.asset(
+                          'assets/tor.svg',
+                          width: 22,
+                          height: 22,
+                          colorFilter: ColorFilter.mode(
+                            Theme.of(context).iconTheme.color!,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                        callback: () {},
+                      ),
+                      SettingsOption(
+                        title: 'Cover traffic',
+                        iconData: FontAwesomeIcons.server,
                         callback: () {},
                       ),
                       SettingsOption(
                         title: 'Log Out',
-                        icon: FontAwesomeIcons.arrowRightFromBracket,
+                        iconData: FontAwesomeIcons.arrowRightFromBracket,
                         callback: () {},
                         hasArrow: false,
                         red: true,
                       ),
                       SettingsOption(
                         title: 'Delete Account',
-                        icon: FontAwesomeIcons.triangleExclamation,
+                        iconData: FontAwesomeIcons.triangleExclamation,
                         callback: () {},
                         hasArrow: false,
                         red: true,
+                        hasDivider: false,
                       ),
                     ],
                   ),
@@ -375,12 +414,16 @@ class ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
   final String activeNickname;
   final VoidCallback onEditNickname;
   final VoidCallback onShowQr;
+  final Color backgroundColor;
+  final Color scrolledColor;
 
   ProfileHeaderDelegate({
     required this.paddingTop,
     required this.activeNickname,
     required this.onEditNickname,
     required this.onShowQr,
+    required this.backgroundColor,
+    required this.scrolledColor,
   });
 
   @override
@@ -399,97 +442,123 @@ class ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
       0.0,
       1.0,
     );
-    final expandedOpacity = (1 - shrinkPercentage * 1.5).clamp(0.0, 1.0);
-    final collapsedOpacity = (shrinkPercentage * 2 - 1).clamp(0.0, 1.0);
 
-    return Container(
-      color: AppColors.secondaryBackground,
-      padding: EdgeInsets.only(top: paddingTop),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Opacity(
-            opacity: expandedOpacity,
-            child: SingleChildScrollView(
-              physics: const NeverScrollableScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 64,
-                  horizontal: 24,
+    final expandedOpacityName = (1 - shrinkPercentage * 8.0).clamp(0.0, 1.0);
+    final expandedOpacityAvatar = (1 - shrinkPercentage * 3.0).clamp(0.0, 1.0);
+    final collapsedOpacity = (shrinkPercentage * 4 - 1).clamp(0.0, 1.0);
+
+    final currentBgColor = Color.lerp(
+      backgroundColor,
+      scrolledColor,
+      shrinkPercentage,
+    );
+
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
+        child: Container(
+          padding: EdgeInsets.only(top: paddingTop),
+          decoration: BoxDecoration(
+            color: currentBgColor,
+            border: Border(
+              bottom: BorderSide(
+                color: AppColors.onSecondaryBackground.withValues(
+                  alpha: 0.15 * shrinkPercentage,
                 ),
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 58,
-                      backgroundColor: AppColors.primaryBlue.withValues(
-                        alpha: 0.2,
-                      ),
-                      child: const FaIcon(
-                        FontAwesomeIcons.solidUser,
-                        size: 38,
-                        color: AppColors.primaryBlue,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(width: 48),
-                        Text(
-                          activeNickname,
-                          style: Theme.of(context).textTheme.displayMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.edit,
-                            size: 20,
-                            color: Colors.grey,
+                width: 0.5,
+              ),
+            ),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              SingleChildScrollView(
+                physics: const NeverScrollableScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 64,
+                    horizontal: 24,
+                  ),
+                  child: Column(
+                    children: [
+                      Opacity(
+                        opacity: expandedOpacityAvatar,
+                        child: CircleAvatar(
+                          radius: 58,
+                          backgroundColor: AppColors.primaryBlue.withValues(
+                            alpha: 0.2,
                           ),
-                          onPressed: onEditNickname,
+                          child: const FaIcon(
+                            FontAwesomeIcons.solidUser,
+                            size: 38,
+                            color: AppColors.primaryBlue,
+                          ),
                         ),
-                      ],
+                      ),
+                      const SizedBox(height: 16),
+                      Opacity(
+                        opacity: expandedOpacityName,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(width: 48),
+                            Text(
+                              activeNickname,
+                              style: Theme.of(context).textTheme.displayMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.edit,
+                                size: 20,
+                                color: Colors.grey,
+                              ),
+                              onPressed: onEditNickname,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Opacity(
+                opacity: collapsedOpacity,
+                child: Container(
+                  height: kToolbarHeight,
+                  alignment: Alignment.center,
+                  child: Text(
+                    activeNickname,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-          Opacity(
-            opacity: collapsedOpacity,
-            child: Container(
-              height: kToolbarHeight,
-              alignment: Alignment.center,
-              child: Text(
-                activeNickname,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 12,
-            right: 12,
-            child: Container(
-              width: 34,
-              height: 34,
-              decoration: const BoxDecoration(
-                color: AppColors.darkerSecondaryBackground,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                icon: const Icon(
-                  Icons.qr_code,
-                  color: AppColors.title,
-                  size: 20,
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: const BoxDecoration(
+                    color: AppColors.darkerSecondaryBackground,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    icon: const Icon(
+                      Icons.qr_code,
+                      color: AppColors.title,
+                      size: 20,
+                    ),
+                    onPressed: onShowQr,
+                  ),
                 ),
-                onPressed: onShowQr,
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -497,6 +566,8 @@ class ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
   @override
   bool shouldRebuild(covariant ProfileHeaderDelegate oldDelegate) {
     return activeNickname != oldDelegate.activeNickname ||
-        paddingTop != oldDelegate.paddingTop;
+        paddingTop != oldDelegate.paddingTop ||
+        backgroundColor != oldDelegate.backgroundColor ||
+        scrolledColor != oldDelegate.scrolledColor;
   }
 }

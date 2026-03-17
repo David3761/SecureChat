@@ -13,6 +13,12 @@ class ContactsRepository {
     return _db.select(_db.contacts).watch();
   }
 
+  Stream<Contact> watchContact(int contactId) {
+    return (_db.select(
+      _db.contacts,
+    )..where((row) => row.id.equals(contactId))).watchSingle();
+  }
+
   Future<int> addContact({
     required String alias,
     required String publicKey,
@@ -36,6 +42,17 @@ class ContactsRepository {
     await (_db.update(_db.contacts)..where((row) => row.id.equals(contactId)))
         .write(ContactsCompanion(alias: Value(newAlias)));
   }
+
+  Future<void> updateDisappearingTimer(int contactId, int? seconds) async {
+    await (_db.update(_db.contacts)..where((row) => row.id.equals(contactId)))
+        .write(ContactsCompanion(disappearingAfterSeconds: Value(seconds)));
+  }
+
+  Future<List<Contact>> getContactsWithDisappearing() async {
+    return (_db.select(
+      _db.contacts,
+    )..where((row) => row.disappearingAfterSeconds.isNotNull())).get();
+  }
 }
 
 final contactsRepositoryProvider = FutureProvider<ContactsRepository>((
@@ -48,4 +65,12 @@ final contactsRepositoryProvider = FutureProvider<ContactsRepository>((
 final contactsStreamProvider = StreamProvider<List<Contact>>((ref) async* {
   final repository = await ref.watch(contactsRepositoryProvider.future);
   yield* repository.watchAllContacts();
+});
+
+final contactStreamProvider = StreamProvider.family<Contact, int>((
+  ref,
+  contactId,
+) async* {
+  final repo = await ref.watch(contactsRepositoryProvider.future);
+  yield* repo.watchContact(contactId);
 });

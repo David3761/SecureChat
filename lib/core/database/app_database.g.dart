@@ -58,8 +58,25 @@ class $ContactsTable extends Contacts with TableInfo<$ContactsTable, Contact> {
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _disappearingAfterSecondsMeta =
+      const VerificationMeta('disappearingAfterSeconds');
   @override
-  List<GeneratedColumn> get $columns => [id, alias, publicKey, createdat];
+  late final GeneratedColumn<int> disappearingAfterSeconds =
+      GeneratedColumn<int>(
+        'disappearing_after_seconds',
+        aliasedName,
+        true,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    alias,
+    publicKey,
+    createdat,
+    disappearingAfterSeconds,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -97,6 +114,15 @@ class $ContactsTable extends Contacts with TableInfo<$ContactsTable, Contact> {
         createdat.isAcceptableOrUnknown(data['createdat']!, _createdatMeta),
       );
     }
+    if (data.containsKey('disappearing_after_seconds')) {
+      context.handle(
+        _disappearingAfterSecondsMeta,
+        disappearingAfterSeconds.isAcceptableOrUnknown(
+          data['disappearing_after_seconds']!,
+          _disappearingAfterSecondsMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -122,6 +148,10 @@ class $ContactsTable extends Contacts with TableInfo<$ContactsTable, Contact> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}createdat'],
       )!,
+      disappearingAfterSeconds: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}disappearing_after_seconds'],
+      ),
     );
   }
 
@@ -136,11 +166,13 @@ class Contact extends DataClass implements Insertable<Contact> {
   final String alias;
   final String publicKey;
   final DateTime createdat;
+  final int? disappearingAfterSeconds;
   const Contact({
     required this.id,
     required this.alias,
     required this.publicKey,
     required this.createdat,
+    this.disappearingAfterSeconds,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -149,6 +181,11 @@ class Contact extends DataClass implements Insertable<Contact> {
     map['alias'] = Variable<String>(alias);
     map['public_key'] = Variable<String>(publicKey);
     map['createdat'] = Variable<DateTime>(createdat);
+    if (!nullToAbsent || disappearingAfterSeconds != null) {
+      map['disappearing_after_seconds'] = Variable<int>(
+        disappearingAfterSeconds,
+      );
+    }
     return map;
   }
 
@@ -158,6 +195,9 @@ class Contact extends DataClass implements Insertable<Contact> {
       alias: Value(alias),
       publicKey: Value(publicKey),
       createdat: Value(createdat),
+      disappearingAfterSeconds: disappearingAfterSeconds == null && nullToAbsent
+          ? const Value.absent()
+          : Value(disappearingAfterSeconds),
     );
   }
 
@@ -171,6 +211,9 @@ class Contact extends DataClass implements Insertable<Contact> {
       alias: serializer.fromJson<String>(json['alias']),
       publicKey: serializer.fromJson<String>(json['publicKey']),
       createdat: serializer.fromJson<DateTime>(json['createdat']),
+      disappearingAfterSeconds: serializer.fromJson<int?>(
+        json['disappearingAfterSeconds'],
+      ),
     );
   }
   @override
@@ -181,6 +224,9 @@ class Contact extends DataClass implements Insertable<Contact> {
       'alias': serializer.toJson<String>(alias),
       'publicKey': serializer.toJson<String>(publicKey),
       'createdat': serializer.toJson<DateTime>(createdat),
+      'disappearingAfterSeconds': serializer.toJson<int?>(
+        disappearingAfterSeconds,
+      ),
     };
   }
 
@@ -189,11 +235,15 @@ class Contact extends DataClass implements Insertable<Contact> {
     String? alias,
     String? publicKey,
     DateTime? createdat,
+    Value<int?> disappearingAfterSeconds = const Value.absent(),
   }) => Contact(
     id: id ?? this.id,
     alias: alias ?? this.alias,
     publicKey: publicKey ?? this.publicKey,
     createdat: createdat ?? this.createdat,
+    disappearingAfterSeconds: disappearingAfterSeconds.present
+        ? disappearingAfterSeconds.value
+        : this.disappearingAfterSeconds,
   );
   Contact copyWithCompanion(ContactsCompanion data) {
     return Contact(
@@ -201,6 +251,9 @@ class Contact extends DataClass implements Insertable<Contact> {
       alias: data.alias.present ? data.alias.value : this.alias,
       publicKey: data.publicKey.present ? data.publicKey.value : this.publicKey,
       createdat: data.createdat.present ? data.createdat.value : this.createdat,
+      disappearingAfterSeconds: data.disappearingAfterSeconds.present
+          ? data.disappearingAfterSeconds.value
+          : this.disappearingAfterSeconds,
     );
   }
 
@@ -210,13 +263,15 @@ class Contact extends DataClass implements Insertable<Contact> {
           ..write('id: $id, ')
           ..write('alias: $alias, ')
           ..write('publicKey: $publicKey, ')
-          ..write('createdat: $createdat')
+          ..write('createdat: $createdat, ')
+          ..write('disappearingAfterSeconds: $disappearingAfterSeconds')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, alias, publicKey, createdat);
+  int get hashCode =>
+      Object.hash(id, alias, publicKey, createdat, disappearingAfterSeconds);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -224,7 +279,8 @@ class Contact extends DataClass implements Insertable<Contact> {
           other.id == this.id &&
           other.alias == this.alias &&
           other.publicKey == this.publicKey &&
-          other.createdat == this.createdat);
+          other.createdat == this.createdat &&
+          other.disappearingAfterSeconds == this.disappearingAfterSeconds);
 }
 
 class ContactsCompanion extends UpdateCompanion<Contact> {
@@ -232,17 +288,20 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
   final Value<String> alias;
   final Value<String> publicKey;
   final Value<DateTime> createdat;
+  final Value<int?> disappearingAfterSeconds;
   const ContactsCompanion({
     this.id = const Value.absent(),
     this.alias = const Value.absent(),
     this.publicKey = const Value.absent(),
     this.createdat = const Value.absent(),
+    this.disappearingAfterSeconds = const Value.absent(),
   });
   ContactsCompanion.insert({
     this.id = const Value.absent(),
     required String alias,
     required String publicKey,
     this.createdat = const Value.absent(),
+    this.disappearingAfterSeconds = const Value.absent(),
   }) : alias = Value(alias),
        publicKey = Value(publicKey);
   static Insertable<Contact> custom({
@@ -250,12 +309,15 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
     Expression<String>? alias,
     Expression<String>? publicKey,
     Expression<DateTime>? createdat,
+    Expression<int>? disappearingAfterSeconds,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (alias != null) 'alias': alias,
       if (publicKey != null) 'public_key': publicKey,
       if (createdat != null) 'createdat': createdat,
+      if (disappearingAfterSeconds != null)
+        'disappearing_after_seconds': disappearingAfterSeconds,
     });
   }
 
@@ -264,12 +326,15 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
     Value<String>? alias,
     Value<String>? publicKey,
     Value<DateTime>? createdat,
+    Value<int?>? disappearingAfterSeconds,
   }) {
     return ContactsCompanion(
       id: id ?? this.id,
       alias: alias ?? this.alias,
       publicKey: publicKey ?? this.publicKey,
       createdat: createdat ?? this.createdat,
+      disappearingAfterSeconds:
+          disappearingAfterSeconds ?? this.disappearingAfterSeconds,
     );
   }
 
@@ -288,6 +353,11 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
     if (createdat.present) {
       map['createdat'] = Variable<DateTime>(createdat.value);
     }
+    if (disappearingAfterSeconds.present) {
+      map['disappearing_after_seconds'] = Variable<int>(
+        disappearingAfterSeconds.value,
+      );
+    }
     return map;
   }
 
@@ -297,7 +367,8 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
           ..write('id: $id, ')
           ..write('alias: $alias, ')
           ..write('publicKey: $publicKey, ')
-          ..write('createdat: $createdat')
+          ..write('createdat: $createdat, ')
+          ..write('disappearingAfterSeconds: $disappearingAfterSeconds')
           ..write(')'))
         .toString();
   }
@@ -831,6 +902,7 @@ typedef $$ContactsTableCreateCompanionBuilder =
       required String alias,
       required String publicKey,
       Value<DateTime> createdat,
+      Value<int?> disappearingAfterSeconds,
     });
 typedef $$ContactsTableUpdateCompanionBuilder =
     ContactsCompanion Function({
@@ -838,6 +910,7 @@ typedef $$ContactsTableUpdateCompanionBuilder =
       Value<String> alias,
       Value<String> publicKey,
       Value<DateTime> createdat,
+      Value<int?> disappearingAfterSeconds,
     });
 
 final class $$ContactsTableReferences
@@ -890,6 +963,11 @@ class $$ContactsTableFilterComposer
 
   ColumnFilters<DateTime> get createdat => $composableBuilder(
     column: $table.createdat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get disappearingAfterSeconds => $composableBuilder(
+    column: $table.disappearingAfterSeconds,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -947,6 +1025,11 @@ class $$ContactsTableOrderingComposer
     column: $table.createdat,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get disappearingAfterSeconds => $composableBuilder(
+    column: $table.disappearingAfterSeconds,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ContactsTableAnnotationComposer
@@ -969,6 +1052,11 @@ class $$ContactsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdat =>
       $composableBuilder(column: $table.createdat, builder: (column) => column);
+
+  GeneratedColumn<int> get disappearingAfterSeconds => $composableBuilder(
+    column: $table.disappearingAfterSeconds,
+    builder: (column) => column,
+  );
 
   Expression<T> messagesRefs<T extends Object>(
     Expression<T> Function($$MessagesTableAnnotationComposer a) f,
@@ -1028,11 +1116,13 @@ class $$ContactsTableTableManager
                 Value<String> alias = const Value.absent(),
                 Value<String> publicKey = const Value.absent(),
                 Value<DateTime> createdat = const Value.absent(),
+                Value<int?> disappearingAfterSeconds = const Value.absent(),
               }) => ContactsCompanion(
                 id: id,
                 alias: alias,
                 publicKey: publicKey,
                 createdat: createdat,
+                disappearingAfterSeconds: disappearingAfterSeconds,
               ),
           createCompanionCallback:
               ({
@@ -1040,11 +1130,13 @@ class $$ContactsTableTableManager
                 required String alias,
                 required String publicKey,
                 Value<DateTime> createdat = const Value.absent(),
+                Value<int?> disappearingAfterSeconds = const Value.absent(),
               }) => ContactsCompanion.insert(
                 id: id,
                 alias: alias,
                 publicKey: publicKey,
                 createdat: createdat,
+                disappearingAfterSeconds: disappearingAfterSeconds,
               ),
           withReferenceMapper: (p0) => p0
               .map(

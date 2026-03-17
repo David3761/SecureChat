@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:chat/core/database/tables.dart';
 import 'package:chat/features/chat/chat_repository.dart';
 import 'package:chat/features/contacts/contacts_repository.dart';
+import 'package:chat/features/disappearing_messages/disappearing_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/key_management/key_controller.dart';
@@ -31,6 +32,7 @@ class ConnectionController extends Notifier<ConnectionState> {
       Future.microtask(() async {
         await _connect(activeKey);
         _setupMessageListener();
+        ref.read(disappearingMessagesServiceProvider).start();
       });
       return ConnectionState.connecting;
     } else {
@@ -57,7 +59,15 @@ class ConnectionController extends Notifier<ConnectionState> {
   }
 
   void _disconnect() {
-    ref.read(webSocketServiceProvider).disconnect();
+    final currentKey = ref.read(keyControllerProvider).publicKeyHex;
+    final wsService = ref.read(webSocketServiceProvider);
+
+    if (currentKey != null) {
+      wsService.disconnectGracefully(currentKey);
+    } else {
+      wsService.disconnect();
+    }
+
     state = ConnectionState.disconnected;
   }
 

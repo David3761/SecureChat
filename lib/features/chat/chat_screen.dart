@@ -1,8 +1,9 @@
+import 'package:chat/core/app_router.dart';
 import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/widgets/message_bubble.dart';
 import 'package:chat/core/widgets/send_button.dart';
 import 'package:chat/features/chat/chat_controller.dart';
-import 'package:chat/utils/formatters.dart';
+import 'package:chat/features/utils/formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -98,7 +99,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.contact.alias), titleSpacing: 0),
+      appBar: AppBar(
+        titleSpacing: 0,
+        title: GestureDetector(
+          onTap: () => Navigator.pushNamed(
+            context,
+            AppRouter.contactDetails,
+            arguments: widget.contact,
+          ),
+          child: Text(widget.contact.alias),
+        ),
+      ),
       body: Column(
         children: [
           Expanded(

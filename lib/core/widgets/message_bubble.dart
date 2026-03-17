@@ -1,5 +1,5 @@
 import 'package:chat/core/database/app_database.dart';
-import 'package:chat/utils/formatters.dart';
+import 'package:chat/features/utils/formatters.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 

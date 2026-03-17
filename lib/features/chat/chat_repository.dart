@@ -64,6 +64,15 @@ class MessagesRepository {
       ),
     );
   }
+
+  Future<void> deleteMessagesOlderThan(int contactId, DateTime cutoff) async {
+    await (_db.delete(_db.messages)..where(
+          (row) =>
+              row.contactId.equals(contactId) &
+              row.timestamp.isSmallerThanValue(cutoff),
+        ))
+        .go();
+  }
 }
 
 final chatRepositoryProvider = FutureProvider<MessagesRepository>((ref) async {

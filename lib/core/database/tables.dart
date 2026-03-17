@@ -7,6 +7,7 @@ class Contacts extends Table {
   TextColumn get alias => text().withLength(min: 1, max: 50)();
   TextColumn get publicKey => text().unique()();
   DateTimeColumn get createdat => dateTime().withDefault(currentDateAndTime)();
+  IntColumn get disappearingAfterSeconds => integer().nullable()();
 }
 
 class Messages extends Table {

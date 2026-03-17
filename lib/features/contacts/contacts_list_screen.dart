@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:ui';
-import 'package:chat/core/app_router.dart';
 import 'package:chat/core/network/connection_controller.dart';
 import 'package:chat/core/theme/theme.dart';
 import 'package:chat/core/widgets/contact_list_item.dart';
+import 'package:chat/features/contacts/new_chat_bottomsheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -28,6 +28,15 @@ class _ContactsListScreenState extends ConsumerState<ContactsListScreen> {
     _debounce?.cancel();
     _searchbarController.dispose();
     super.dispose();
+  }
+
+  void _showNewChatSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => NewChatSheet(),
+    );
   }
 
   void _onSearchChanged(String query) {
@@ -92,6 +101,7 @@ class _ContactsListScreenState extends ConsumerState<ContactsListScreen> {
               scrolledColor: AppColors.secondaryBackground.withValues(
                 alpha: 0.10,
               ),
+              onAddPressed: () => _showNewChatSheet(context),
               searchBarBuilder: (textOpacity) => SearchBar(
                 controller: _searchbarController,
                 onChanged: _onSearchChanged,
@@ -174,10 +184,6 @@ class _ContactsListScreenState extends ConsumerState<ContactsListScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.pushNamed(context, AppRouter.addContact),
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }
@@ -187,12 +193,14 @@ class HeaderDelegate extends SliverPersistentHeaderDelegate {
   final Widget Function(double textOpacity) searchBarBuilder;
   final Color backgroundColor;
   final Color scrolledColor;
+  final VoidCallback onAddPressed;
 
   HeaderDelegate({
     required this.safeAreaTop,
     required this.searchBarBuilder,
     required this.backgroundColor,
     required this.scrolledColor,
+    required this.onAddPressed,
   });
 
   @override
@@ -291,7 +299,7 @@ class HeaderDelegate extends SliverPersistentHeaderDelegate {
                           padding: EdgeInsets.zero,
                           icon: const FaIcon(
                             FontAwesomeIcons.ellipsis,
-                            size: 20,
+                            size: 16,
                           ),
                         ),
                       ),
@@ -303,16 +311,16 @@ class HeaderDelegate extends SliverPersistentHeaderDelegate {
                         width: 32,
                         height: 32,
                         decoration: const BoxDecoration(
-                          color: AppColors.primaryBlue,
+                          color: AppColors.secondaryBackground,
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
-                          onPressed: () {},
+                          onPressed: onAddPressed,
                           padding: EdgeInsets.zero,
                           icon: const FaIcon(
                             FontAwesomeIcons.plus,
-                            size: 20,
-                            color: AppColors.white,
+                            size: 16,
+                            color: AppColors.onSecondaryBackground,
                           ),
                         ),
                       ),

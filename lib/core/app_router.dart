@@ -1,6 +1,7 @@
 import 'package:chat/core/database/app_database.dart';
 import 'package:chat/core/theme/theme.dart';
 import 'package:chat/features/chat/chat_screen.dart';
+import 'package:chat/features/contacts/contact_details_screen.dart';
 import 'package:chat/features/key_management/key_controller.dart';
 import 'package:chat/features/main/main_screen.dart';
 import 'package:chat/features/profile/profile_screen.dart';
@@ -20,6 +21,7 @@ class AppRouter {
   static const String addContact = '/add_contact';
   static const String chat = '/chat';
   static const String profile = '/profile';
+  static const String contactDetails = '/contact_details';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -38,6 +40,11 @@ class AppRouter {
       case chat:
         final contact = settings.arguments as Contact;
         return CupertinoPageRoute(builder: (_) => ChatScreen(contact: contact));
+      case contactDetails:
+        final contact = settings.arguments as Contact;
+        return CupertinoPageRoute(
+          builder: (_) => ContactDetailsScreen(contact: contact),
+        );
       default:
         return CupertinoPageRoute(builder: (_) => MainScreen());
     }

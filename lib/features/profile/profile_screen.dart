@@ -489,6 +489,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         callback: () => _showDisappearingPicker(activePubKey),
                       ),
                       SettingsOption(
+                        title: 'Blocked contacts',
+                        iconData: FontAwesomeIcons.ban,
+                        callback: () => Navigator.pushNamed(
+                          context,
+                          AppRouter.blockedContacts,
+                        ),
+                      ),
+                      SettingsOption(
                         title: 'App lock',
                         customIcon: SvgPicture.asset(
                           'assets/lock.svg',
@@ -523,7 +531,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       SettingsOption(
                         title: 'Log Out',
                         iconData: FontAwesomeIcons.arrowRightFromBracket,
-                        callback: () {},
+                        callback: _handleLogout,
                         hasArrow: false,
                         red: true,
                       ),
@@ -685,8 +693,8 @@ class ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
                   ),
                   child: IconButton(
                     padding: EdgeInsets.zero,
-                    icon: const Icon(
-                      Icons.qr_code,
+                    icon: const FaIcon(
+                      FontAwesomeIcons.qrcode,
                       color: AppColors.title,
                       size: 20,
                     ),

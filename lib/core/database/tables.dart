@@ -2,12 +2,18 @@ import 'package:drift/drift.dart';
 
 enum MessageStatus { sending, delivered, read, failed }
 
+enum ContactStatus { active, pendingIn, pendingOut, blocked }
+
 class Contacts extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get alias => text().withLength(min: 1, max: 50)();
   TextColumn get publicKey => text().unique()();
   DateTimeColumn get createdat => dateTime().withDefault(currentDateAndTime)();
   IntColumn get disappearingAfterSeconds => integer().nullable()();
+  IntColumn get status =>
+      intEnum<ContactStatus>().withDefault(const Constant(0))();
+  BoolColumn get isQrInitiated =>
+      boolean().withDefault(const Constant(false))();
 }
 
 class Messages extends Table {

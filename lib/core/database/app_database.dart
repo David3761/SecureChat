@@ -16,7 +16,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration {
@@ -33,6 +33,12 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 4) {
           await m.addColumn(contacts, contacts.disappearingAfterSeconds);
+        }
+        if (from < 5) {
+          await m.addColumn(contacts, contacts.status);
+        }
+        if (from < 6) {
+          await m.addColumn(contacts, contacts.isQrInitiated);
         }
       },
       beforeOpen: (details) async {

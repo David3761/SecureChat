@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:chat/core/database/app_database.dart';
+import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/network/incoming_message_handler.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
@@ -140,19 +142,22 @@ class ConnectionController extends Notifier<ConnectionState> {
       final contactsRepo = ref.read(contactsRepositoryProvider);
       if (contactsRepo == null) return;
 
-      var contact = await contactsRepo.getContactByPublicKey(senderPubKey);
+      Contact? contact = await contactsRepo.getContactByPublicKey(senderPubKey);
 
-      //TODO: special section for stranger messaging me
+      if (contact?.status == ContactStatus.blocked) return;
+
       if (contact == null) {
         final shortKey =
             '${senderPubKey.substring(0, 4)}...${senderPubKey.substring(senderPubKey.length - 4)}';
         final defaultSeconds = await ref
             .read(secureStorageProvider)
             .getDefaultDisappearingSeconds(keyState.publicKeyHex!);
+
         await contactsRepo.addContact(
           alias: 'Unknown ($shortKey)',
           publicKey: senderPubKey,
           disappearingAfterSeconds: defaultSeconds,
+          status: ContactStatus.pendingIn,
         );
         contact = await contactsRepo.getContactByPublicKey(senderPubKey);
       }
@@ -169,16 +174,17 @@ class ConnectionController extends Notifier<ConnectionState> {
       Map<String, dynamic> data;
       try {
         data = jsonDecode(decryptedPlaintext) as Map<String, dynamic>;
-      } catch (e) {
-        final chatRepo = ref.read(chatRepositoryProvider);
-        if (chatRepo == null) return;
-
-        await chatRepo.saveMessage(
-          messageId: messageId,
-          contactId: contact.id,
-          content: decryptedPlaintext,
-          isFromMe: false,
-        );
+      } catch (_) {
+        if (contact.status == ContactStatus.active) {
+          final chatRepo = ref.read(chatRepositoryProvider);
+          if (chatRepo == null) return;
+          await chatRepo.saveMessage(
+            messageId: messageId,
+            contactId: contact.id,
+            content: decryptedPlaintext,
+            isFromMe: false,
+          );
+        }
         return;
       }
 

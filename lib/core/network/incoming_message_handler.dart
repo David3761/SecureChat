@@ -1,6 +1,7 @@
 import 'package:chat/core/database/app_database.dart';
 import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/providers.dart';
+import 'package:chat/features/contacts/contact_request_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,6 +22,7 @@ class IncomingMessageHandler {
 
     switch (data['type']) {
       case 'text':
+        if (contact.status != ContactStatus.active) return;
         await chatRepo.saveMessage(
           messageId: messageId,
           contactId: contactId,
@@ -28,8 +30,31 @@ class IncomingMessageHandler {
           isFromMe: false,
         );
         break;
+      case 'contact_request':
+        final isQrInitiated = data['qr_initiated'] == true;
+
+        await contactsRepo.updateQrInitiated(contact.id, isQrInitiated);
+
+        if (isQrInitiated) {
+          _ref
+              .read(contactRequestControllerProvider.notifier)
+              .showRequest(contact);
+        }
+
+        final nickname = data['nickname'] as String?;
+        if (nickname != null) {
+          await contactsRepo.updateAlias(contactId, nickname);
+        }
+        break;
+      case 'contact_request_accepted':
+        await contactsRepo.updateContactStatus(contactId, ContactStatus.active);
+
+        final nickname = data['nickname'] as String?;
+        if (nickname != null) {
+          contactsRepo.updateAlias(contactId, nickname);
+        }
+        break;
       case 'profile_sync':
-        //TODO: after profile sync, I appear directly on his list screen. there needs to be an "accept request mechanism"
         final newAlias = data['nickname'] as String;
         if (contact.alias.startsWith('Unknown (')) {
           await contactsRepo.updateAlias(contactId, newAlias);

@@ -1,13 +1,21 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ui';
+import 'package:chat/core/app_router.dart';
+import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/network/connection_controller.dart';
 import 'package:chat/core/providers.dart';
 import 'package:chat/core/theme/theme.dart';
 import 'package:chat/core/widgets/contact_list_item.dart';
+import 'package:chat/core/widgets/qr_scanner_sheet.dart';
+import 'package:chat/features/contacts/contact_request_controller.dart';
+import 'package:chat/features/contacts/contact_request_modal.dart';
 import 'package:chat/features/contacts/new_chat_bottomsheet.dart';
+import 'package:chat/features/key_management/key_controller.dart';
 import 'package:flutter/material.dart' hide ConnectionState;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../core/database/app_database.dart';
 import 'contacts_repository.dart';
@@ -23,6 +31,27 @@ class _ContactsListScreenState extends ConsumerState<ContactsListScreen> {
   final TextEditingController _searchbarController = TextEditingController();
   String _searchQuery = '';
   Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final pendingRequest = ref.read(contactRequestControllerProvider);
+      if (pendingRequest != null) {
+        _showRequestModal(pendingRequest);
+        return;
+      }
+
+      final contactsRepo = ref.read(contactsRepositoryProvider);
+      if (contactsRepo == null) return;
+
+      final qrInitiatedPendingContacts = await contactsRepo
+          .getQrInitiatedPendingContacts();
+      if (qrInitiatedPendingContacts.isNotEmpty && mounted) {
+        _showRequestModal(qrInitiatedPendingContacts.first);
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -82,10 +111,96 @@ class _ContactsListScreenState extends ConsumerState<ContactsListScreen> {
     }
   }
 
+  void _showQrScanner(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) =>
+          QrScannerSheet(onScanned: (pubKey) => _handleQrScan(pubKey)),
+    );
+  }
+
+  Future<void> _handleQrScan(String pubKey) async {
+    final keyState = ref.read(keyControllerProvider);
+    if (keyState.publicKeyHex == pubKey) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("That's your own QR code.")));
+      return;
+    }
+
+    final contactsRepo = ref.read(contactsRepositoryProvider);
+    if (contactsRepo == null) return;
+
+    final existing = await contactsRepo.getContactByPublicKey(pubKey);
+    if (existing != null && existing.status == ContactStatus.active) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('This user is already in your contacts.'),
+          ),
+        );
+      }
+      return;
+    }
+
+    final storageService = ref.read(secureStorageProvider);
+    final cryptoService = ref.read(cryptoServiceProvider);
+    final wsService = ref.read(webSocketServiceProvider);
+    final myPubKey = await storageService.getLastActiveAccount();
+    if (myPubKey == null) return;
+
+    final myNickname = keyState.nickname ?? 'User${myPubKey.substring(0, 5)}';
+    final defaultSeconds = await storageService.getDefaultDisappearingSeconds(
+      myPubKey,
+    );
+
+    if (existing == null) {
+      await contactsRepo.addContact(
+        alias: pubKey.substring(0, 8),
+        publicKey: pubKey,
+        disappearingAfterSeconds: defaultSeconds,
+        status: ContactStatus.pendingOut,
+      );
+    }
+
+    final encryptedBlob = cryptoService.encryptMessage(
+      plainText: jsonEncode({
+        'type': 'contact_request',
+        'nickname': myNickname,
+        'qr_initiated': true,
+      }),
+      mySecretKey: keyState.activeSecretKey!,
+      theirPublicKeyHex: pubKey,
+    );
+
+    wsService.sendMessage(
+      messageId: const Uuid().v4(),
+      senderPubKey: myPubKey,
+      recipientPubKey: pubKey,
+      encryptedBlob: encryptedBlob,
+    );
+  }
+
+  void _showRequestModal(Contact contact) {
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ContactRequestModal(contact: contact),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final contactsAsyncValue = ref.watch(contactsStreamProvider);
     final connectionState = ref.watch(connectionControllerProvider);
+    ref.listen(contactRequestControllerProvider, (prev, contact) {
+      if (contact != null && prev == null) {
+        _showRequestModal(contact);
+      }
+    });
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -131,6 +246,7 @@ class _ContactsListScreenState extends ConsumerState<ContactsListScreen> {
                       alpha: 0.10,
                     ),
                     onAddPressed: () => _showNewChatSheet(context),
+                    onScanPressed: () => _showQrScanner(context),
                     searchBarBuilder: (textOpacity) => SearchBar(
                       controller: _searchbarController,
                       onChanged: _onSearchChanged,
@@ -229,6 +345,7 @@ class HeaderDelegate extends SliverPersistentHeaderDelegate {
   final Color backgroundColor;
   final Color scrolledColor;
   final VoidCallback onAddPressed;
+  final VoidCallback onScanPressed;
 
   HeaderDelegate({
     required this.safeAreaTop,
@@ -236,6 +353,7 @@ class HeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.backgroundColor,
     required this.scrolledColor,
     required this.onAddPressed,
+    required this.onScanPressed,
   });
 
   @override
@@ -330,11 +448,35 @@ class HeaderDelegate extends SliverPersistentHeaderDelegate {
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
-                          onPressed: () {},
+                          onPressed: () => Navigator.pushNamed(
+                            context,
+                            AppRouter.contactRequests,
+                          ),
                           padding: EdgeInsets.zero,
                           icon: const FaIcon(
                             FontAwesomeIcons.ellipsis,
                             size: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 56,
+                      top: 14,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: const BoxDecoration(
+                          color: AppColors.secondaryBackground,
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          onPressed: onScanPressed,
+                          padding: EdgeInsets.zero,
+                          icon: const FaIcon(
+                            FontAwesomeIcons.camera,
+                            size: 16,
+                            color: AppColors.onSecondaryBackground,
                           ),
                         ),
                       ),

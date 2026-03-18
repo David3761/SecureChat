@@ -70,12 +70,39 @@ class $ContactsTable extends Contacts with TableInfo<$ContactsTable, Contact> {
         requiredDuringInsert: false,
       );
   @override
+  late final GeneratedColumnWithTypeConverter<ContactStatus, int> status =
+      GeneratedColumn<int>(
+        'status',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      ).withConverter<ContactStatus>($ContactsTable.$converterstatus);
+  static const VerificationMeta _isQrInitiatedMeta = const VerificationMeta(
+    'isQrInitiated',
+  );
+  @override
+  late final GeneratedColumn<bool> isQrInitiated = GeneratedColumn<bool>(
+    'is_qr_initiated',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_qr_initiated" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
   List<GeneratedColumn> get $columns => [
     id,
     alias,
     publicKey,
     createdat,
     disappearingAfterSeconds,
+    status,
+    isQrInitiated,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -123,6 +150,15 @@ class $ContactsTable extends Contacts with TableInfo<$ContactsTable, Contact> {
         ),
       );
     }
+    if (data.containsKey('is_qr_initiated')) {
+      context.handle(
+        _isQrInitiatedMeta,
+        isQrInitiated.isAcceptableOrUnknown(
+          data['is_qr_initiated']!,
+          _isQrInitiatedMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -152,6 +188,16 @@ class $ContactsTable extends Contacts with TableInfo<$ContactsTable, Contact> {
         DriftSqlType.int,
         data['${effectivePrefix}disappearing_after_seconds'],
       ),
+      status: $ContactsTable.$converterstatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}status'],
+        )!,
+      ),
+      isQrInitiated: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_qr_initiated'],
+      )!,
     );
   }
 
@@ -159,6 +205,9 @@ class $ContactsTable extends Contacts with TableInfo<$ContactsTable, Contact> {
   $ContactsTable createAlias(String alias) {
     return $ContactsTable(attachedDatabase, alias);
   }
+
+  static JsonTypeConverter2<ContactStatus, int, int> $converterstatus =
+      const EnumIndexConverter<ContactStatus>(ContactStatus.values);
 }
 
 class Contact extends DataClass implements Insertable<Contact> {
@@ -167,12 +216,16 @@ class Contact extends DataClass implements Insertable<Contact> {
   final String publicKey;
   final DateTime createdat;
   final int? disappearingAfterSeconds;
+  final ContactStatus status;
+  final bool isQrInitiated;
   const Contact({
     required this.id,
     required this.alias,
     required this.publicKey,
     required this.createdat,
     this.disappearingAfterSeconds,
+    required this.status,
+    required this.isQrInitiated,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -186,6 +239,12 @@ class Contact extends DataClass implements Insertable<Contact> {
         disappearingAfterSeconds,
       );
     }
+    {
+      map['status'] = Variable<int>(
+        $ContactsTable.$converterstatus.toSql(status),
+      );
+    }
+    map['is_qr_initiated'] = Variable<bool>(isQrInitiated);
     return map;
   }
 
@@ -198,6 +257,8 @@ class Contact extends DataClass implements Insertable<Contact> {
       disappearingAfterSeconds: disappearingAfterSeconds == null && nullToAbsent
           ? const Value.absent()
           : Value(disappearingAfterSeconds),
+      status: Value(status),
+      isQrInitiated: Value(isQrInitiated),
     );
   }
 
@@ -214,6 +275,10 @@ class Contact extends DataClass implements Insertable<Contact> {
       disappearingAfterSeconds: serializer.fromJson<int?>(
         json['disappearingAfterSeconds'],
       ),
+      status: $ContactsTable.$converterstatus.fromJson(
+        serializer.fromJson<int>(json['status']),
+      ),
+      isQrInitiated: serializer.fromJson<bool>(json['isQrInitiated']),
     );
   }
   @override
@@ -227,6 +292,10 @@ class Contact extends DataClass implements Insertable<Contact> {
       'disappearingAfterSeconds': serializer.toJson<int?>(
         disappearingAfterSeconds,
       ),
+      'status': serializer.toJson<int>(
+        $ContactsTable.$converterstatus.toJson(status),
+      ),
+      'isQrInitiated': serializer.toJson<bool>(isQrInitiated),
     };
   }
 
@@ -236,6 +305,8 @@ class Contact extends DataClass implements Insertable<Contact> {
     String? publicKey,
     DateTime? createdat,
     Value<int?> disappearingAfterSeconds = const Value.absent(),
+    ContactStatus? status,
+    bool? isQrInitiated,
   }) => Contact(
     id: id ?? this.id,
     alias: alias ?? this.alias,
@@ -244,6 +315,8 @@ class Contact extends DataClass implements Insertable<Contact> {
     disappearingAfterSeconds: disappearingAfterSeconds.present
         ? disappearingAfterSeconds.value
         : this.disappearingAfterSeconds,
+    status: status ?? this.status,
+    isQrInitiated: isQrInitiated ?? this.isQrInitiated,
   );
   Contact copyWithCompanion(ContactsCompanion data) {
     return Contact(
@@ -254,6 +327,10 @@ class Contact extends DataClass implements Insertable<Contact> {
       disappearingAfterSeconds: data.disappearingAfterSeconds.present
           ? data.disappearingAfterSeconds.value
           : this.disappearingAfterSeconds,
+      status: data.status.present ? data.status.value : this.status,
+      isQrInitiated: data.isQrInitiated.present
+          ? data.isQrInitiated.value
+          : this.isQrInitiated,
     );
   }
 
@@ -264,14 +341,23 @@ class Contact extends DataClass implements Insertable<Contact> {
           ..write('alias: $alias, ')
           ..write('publicKey: $publicKey, ')
           ..write('createdat: $createdat, ')
-          ..write('disappearingAfterSeconds: $disappearingAfterSeconds')
+          ..write('disappearingAfterSeconds: $disappearingAfterSeconds, ')
+          ..write('status: $status, ')
+          ..write('isQrInitiated: $isQrInitiated')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, alias, publicKey, createdat, disappearingAfterSeconds);
+  int get hashCode => Object.hash(
+    id,
+    alias,
+    publicKey,
+    createdat,
+    disappearingAfterSeconds,
+    status,
+    isQrInitiated,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -280,7 +366,9 @@ class Contact extends DataClass implements Insertable<Contact> {
           other.alias == this.alias &&
           other.publicKey == this.publicKey &&
           other.createdat == this.createdat &&
-          other.disappearingAfterSeconds == this.disappearingAfterSeconds);
+          other.disappearingAfterSeconds == this.disappearingAfterSeconds &&
+          other.status == this.status &&
+          other.isQrInitiated == this.isQrInitiated);
 }
 
 class ContactsCompanion extends UpdateCompanion<Contact> {
@@ -289,12 +377,16 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
   final Value<String> publicKey;
   final Value<DateTime> createdat;
   final Value<int?> disappearingAfterSeconds;
+  final Value<ContactStatus> status;
+  final Value<bool> isQrInitiated;
   const ContactsCompanion({
     this.id = const Value.absent(),
     this.alias = const Value.absent(),
     this.publicKey = const Value.absent(),
     this.createdat = const Value.absent(),
     this.disappearingAfterSeconds = const Value.absent(),
+    this.status = const Value.absent(),
+    this.isQrInitiated = const Value.absent(),
   });
   ContactsCompanion.insert({
     this.id = const Value.absent(),
@@ -302,6 +394,8 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
     required String publicKey,
     this.createdat = const Value.absent(),
     this.disappearingAfterSeconds = const Value.absent(),
+    this.status = const Value.absent(),
+    this.isQrInitiated = const Value.absent(),
   }) : alias = Value(alias),
        publicKey = Value(publicKey);
   static Insertable<Contact> custom({
@@ -310,6 +404,8 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
     Expression<String>? publicKey,
     Expression<DateTime>? createdat,
     Expression<int>? disappearingAfterSeconds,
+    Expression<int>? status,
+    Expression<bool>? isQrInitiated,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -318,6 +414,8 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
       if (createdat != null) 'createdat': createdat,
       if (disappearingAfterSeconds != null)
         'disappearing_after_seconds': disappearingAfterSeconds,
+      if (status != null) 'status': status,
+      if (isQrInitiated != null) 'is_qr_initiated': isQrInitiated,
     });
   }
 
@@ -327,6 +425,8 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
     Value<String>? publicKey,
     Value<DateTime>? createdat,
     Value<int?>? disappearingAfterSeconds,
+    Value<ContactStatus>? status,
+    Value<bool>? isQrInitiated,
   }) {
     return ContactsCompanion(
       id: id ?? this.id,
@@ -335,6 +435,8 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
       createdat: createdat ?? this.createdat,
       disappearingAfterSeconds:
           disappearingAfterSeconds ?? this.disappearingAfterSeconds,
+      status: status ?? this.status,
+      isQrInitiated: isQrInitiated ?? this.isQrInitiated,
     );
   }
 
@@ -358,6 +460,14 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
         disappearingAfterSeconds.value,
       );
     }
+    if (status.present) {
+      map['status'] = Variable<int>(
+        $ContactsTable.$converterstatus.toSql(status.value),
+      );
+    }
+    if (isQrInitiated.present) {
+      map['is_qr_initiated'] = Variable<bool>(isQrInitiated.value);
+    }
     return map;
   }
 
@@ -368,7 +478,9 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
           ..write('alias: $alias, ')
           ..write('publicKey: $publicKey, ')
           ..write('createdat: $createdat, ')
-          ..write('disappearingAfterSeconds: $disappearingAfterSeconds')
+          ..write('disappearingAfterSeconds: $disappearingAfterSeconds, ')
+          ..write('status: $status, ')
+          ..write('isQrInitiated: $isQrInitiated')
           ..write(')'))
         .toString();
   }
@@ -903,6 +1015,8 @@ typedef $$ContactsTableCreateCompanionBuilder =
       required String publicKey,
       Value<DateTime> createdat,
       Value<int?> disappearingAfterSeconds,
+      Value<ContactStatus> status,
+      Value<bool> isQrInitiated,
     });
 typedef $$ContactsTableUpdateCompanionBuilder =
     ContactsCompanion Function({
@@ -911,6 +1025,8 @@ typedef $$ContactsTableUpdateCompanionBuilder =
       Value<String> publicKey,
       Value<DateTime> createdat,
       Value<int?> disappearingAfterSeconds,
+      Value<ContactStatus> status,
+      Value<bool> isQrInitiated,
     });
 
 final class $$ContactsTableReferences
@@ -968,6 +1084,17 @@ class $$ContactsTableFilterComposer
 
   ColumnFilters<int> get disappearingAfterSeconds => $composableBuilder(
     column: $table.disappearingAfterSeconds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<ContactStatus, ContactStatus, int>
+  get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<bool> get isQrInitiated => $composableBuilder(
+    column: $table.isQrInitiated,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1030,6 +1157,16 @@ class $$ContactsTableOrderingComposer
     column: $table.disappearingAfterSeconds,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isQrInitiated => $composableBuilder(
+    column: $table.isQrInitiated,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ContactsTableAnnotationComposer
@@ -1055,6 +1192,14 @@ class $$ContactsTableAnnotationComposer
 
   GeneratedColumn<int> get disappearingAfterSeconds => $composableBuilder(
     column: $table.disappearingAfterSeconds,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<ContactStatus, int> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<bool> get isQrInitiated => $composableBuilder(
+    column: $table.isQrInitiated,
     builder: (column) => column,
   );
 
@@ -1117,12 +1262,16 @@ class $$ContactsTableTableManager
                 Value<String> publicKey = const Value.absent(),
                 Value<DateTime> createdat = const Value.absent(),
                 Value<int?> disappearingAfterSeconds = const Value.absent(),
+                Value<ContactStatus> status = const Value.absent(),
+                Value<bool> isQrInitiated = const Value.absent(),
               }) => ContactsCompanion(
                 id: id,
                 alias: alias,
                 publicKey: publicKey,
                 createdat: createdat,
                 disappearingAfterSeconds: disappearingAfterSeconds,
+                status: status,
+                isQrInitiated: isQrInitiated,
               ),
           createCompanionCallback:
               ({
@@ -1131,12 +1280,16 @@ class $$ContactsTableTableManager
                 required String publicKey,
                 Value<DateTime> createdat = const Value.absent(),
                 Value<int?> disappearingAfterSeconds = const Value.absent(),
+                Value<ContactStatus> status = const Value.absent(),
+                Value<bool> isQrInitiated = const Value.absent(),
               }) => ContactsCompanion.insert(
                 id: id,
                 alias: alias,
                 publicKey: publicKey,
                 createdat: createdat,
                 disappearingAfterSeconds: disappearingAfterSeconds,
+                status: status,
+                isQrInitiated: isQrInitiated,
               ),
           withReferenceMapper: (p0) => p0
               .map(

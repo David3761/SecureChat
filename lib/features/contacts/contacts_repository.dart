@@ -1,3 +1,4 @@
+import 'package:chat/core/database/tables.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,7 +11,9 @@ class ContactsRepository {
   ContactsRepository(this._db);
 
   Stream<List<Contact>> watchAllContacts() {
-    return _db.select(_db.contacts).watch();
+    return (_db.select(
+      _db.contacts,
+    )..where((row) => row.status.equals(ContactStatus.active.index))).watch();
   }
 
   Stream<Contact> watchContact(int contactId) {
@@ -23,6 +26,8 @@ class ContactsRepository {
     required String alias,
     required String publicKey,
     int? disappearingAfterSeconds,
+    ContactStatus status = ContactStatus.active,
+    bool isQrInitiated = false,
   }) async {
     return await _db
         .into(_db.contacts)
@@ -31,6 +36,8 @@ class ContactsRepository {
             alias: alias,
             publicKey: publicKey,
             disappearingAfterSeconds: Value(disappearingAfterSeconds),
+            status: Value(status),
+            isQrInitiated: Value(isQrInitiated),
           ),
         );
   }
@@ -60,6 +67,49 @@ class ContactsRepository {
       _db.contacts,
     )..where((row) => row.disappearingAfterSeconds.isNotNull())).get();
   }
+
+  // Future<List<Contact>> getPendingInContacts() async {
+  //   return (_db.select(
+  //     _db.contacts,
+  //   )..where((row) => row.status.equals(ContactStatus.pendingIn.index))).get();
+  // }
+
+  Stream<List<Contact>> watchPendingInContacts() {
+    return (_db.select(_db.contacts)
+          ..where((row) => row.status.equals(ContactStatus.pendingIn.index)))
+        .watch();
+  }
+
+  // Future<List<Contact>> getBlockedContacts() async {
+  //   return (_db.select(
+  //     _db.contacts,
+  //   )..where((row) => row.status.equals(ContactStatus.blocked.index))).get();
+  // }
+
+  Stream<List<Contact>> watchBlockedContacts() {
+    return (_db.select(
+      _db.contacts,
+    )..where((row) => row.status.equals(ContactStatus.blocked.index))).watch();
+  }
+
+  Future<void> updateContactStatus(int contactId, ContactStatus status) async {
+    await (_db.update(_db.contacts)..where((row) => row.id.equals(contactId)))
+        .write(ContactsCompanion(status: Value(status)));
+  }
+
+  Future<void> updateQrInitiated(int contactId, bool value) async {
+    await (_db.update(_db.contacts)..where((row) => row.id.equals(contactId)))
+        .write(ContactsCompanion(isQrInitiated: Value(value)));
+  }
+
+  Future<List<Contact>> getQrInitiatedPendingContacts() async {
+    return (_db.select(_db.contacts)..where(
+          (row) =>
+              row.status.equals(ContactStatus.pendingIn.index) &
+              row.isQrInitiated.equals(true),
+        ))
+        .get();
+  }
 }
 
 final contactsStreamProvider = StreamProvider<List<Contact>>((ref) {
@@ -75,4 +125,16 @@ final contactStreamProvider = StreamProvider.family<Contact, int>((
   final repository = ref.watch(contactsRepositoryProvider);
   if (repository == null) return const Stream.empty();
   return repository.watchContact(contactId);
+});
+
+final pendingInContactsProvider = StreamProvider<List<Contact>>((ref) {
+  final repository = ref.watch(contactsRepositoryProvider);
+  if (repository == null) return const Stream.empty();
+  return repository.watchPendingInContacts();
+});
+
+final blockedContactsProvider = StreamProvider<List<Contact>>((ref) {
+  final repository = ref.watch(contactsRepositoryProvider);
+  if (repository == null) return const Stream.empty();
+  return repository.watchBlockedContacts();
 });

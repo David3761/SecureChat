@@ -17,6 +17,9 @@ class WebSocketService {
       ?.where((msg) => msg['type'] == 'ack')
       .map((msg) => msg['message_id'] as String);
 
+  bool get isConnected =>
+      _socket != null && _socket!.readyState == WebSocket.open;
+
   Future<void> connect(String myPublicKey) async {
     final String host = Platform.isAndroid ? '10.0.2.2' : '127.0.0.1';
     final String wsUrl = 'ws://$host:8080/ws?pubkey=$myPublicKey';
@@ -70,7 +73,7 @@ class WebSocketService {
     }
   }
 
-  void sendMessage({
+  int sendMessage({
     required String messageId,
     required String senderPubKey,
     required String recipientPubKey,
@@ -91,6 +94,13 @@ class WebSocketService {
 
     _socket!.add(payload);
     debugPrint('Message payload dispatched to server.');
+    return payload.length;
+  }
+
+  void sendDummy(String blob) {
+    if (!isConnected) return;
+    _socket!.add(jsonEncode({'type': 'dummy', 'blob': blob}));
+    debugPrint("Sent dummy.");
   }
 
   Future<void> disconnectGracefully(String publicKeyHex) async {

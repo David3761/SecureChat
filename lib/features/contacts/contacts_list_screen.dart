@@ -7,7 +7,6 @@ import 'package:chat/core/network/connection_controller.dart';
 import 'package:chat/core/providers.dart';
 import 'package:chat/core/theme/theme.dart';
 import 'package:chat/core/widgets/contact_list_item.dart';
-import 'package:chat/core/widgets/qr_scanner_sheet.dart';
 import 'package:chat/features/contacts/new_chat_bottomsheet.dart';
 import 'package:chat/features/key_management/key_controller.dart';
 import 'package:flutter/material.dart' hide ConnectionState;
@@ -89,13 +88,7 @@ class _ContactsListScreenState extends ConsumerState<ContactsListScreen> {
   }
 
   void _showQrScanner(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) =>
-          QrScannerSheet(onScanned: (pubKey) => _handleQrScan(pubKey)),
-    );
+    Navigator.pushNamed(context, AppRouter.qrScanner, arguments: _handleQrScan);
   }
 
   Future<void> _handleQrScan(String pubKey) async {

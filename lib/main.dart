@@ -6,6 +6,8 @@ import 'package:chat/core/theme/theme.dart';
 import 'package:chat/features/contacts/contact_request_controller.dart';
 import 'package:chat/features/contacts/contact_request_modal.dart';
 import 'package:chat/features/disappearing_messages/disappearing_service.dart';
+import 'package:chat/features/key_management/key_controller.dart';
+import 'package:chat/mask_traffic/traffic_masking_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,8 +39,18 @@ class _AppEntryState extends ConsumerState<AppEntry> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       ref.read(disappearingMessagesServiceProvider).start();
+
+      final pubKey = ref.read(keyControllerProvider).publicKeyHex;
+      if (pubKey != null) {
+        final enabled = await ref
+            .read(secureStorageProvider)
+            .getMaskTrafficEnabled(pubKey);
+        if (enabled) {
+          ref.read(trafficMaskingServiceProvider).start();
+        }
+      }
     });
   }
 

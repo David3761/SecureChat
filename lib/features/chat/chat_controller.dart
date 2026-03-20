@@ -4,6 +4,7 @@ import 'package:chat/core/database/app_database.dart';
 import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/providers.dart';
 import 'package:chat/features/key_management/key_controller.dart';
+import 'package:chat/mask_traffic/message_size_tracker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -54,12 +55,13 @@ class ChatController extends AsyncNotifier<void> {
       );
 
       try {
-        wsService.sendMessage(
+        final size = wsService.sendMessage(
           messageId: messageId,
           senderPubKey: myPubKey,
           recipientPubKey: contact.publicKey,
           encryptedBlob: encryptedBase64Blob,
         );
+        ref.read(messageSizeTrackerProvider).record(size);
 
         wsService.ackStream
             ?.firstWhere((id) => id == messageId)
@@ -128,12 +130,13 @@ class ChatController extends AsyncNotifier<void> {
       );
 
       try {
-        wsService.sendMessage(
+        final size = wsService.sendMessage(
           messageId: messageId,
           senderPubKey: myPubKey,
           recipientPubKey: contact.publicKey,
           encryptedBlob: encryptedBase64Blob,
         );
+        ref.read(messageSizeTrackerProvider).record(size);
 
         wsService.ackStream
             ?.firstWhere((id) => id == messageId)
@@ -197,12 +200,13 @@ class ChatController extends AsyncNotifier<void> {
         theirPublicKeyHex: contact.publicKey,
       );
 
-      wsService.sendMessage(
+      final size = wsService.sendMessage(
         messageId: const Uuid().v4(),
         senderPubKey: myPubKey,
         recipientPubKey: contact.publicKey,
         encryptedBlob: encryptedBase64Blob,
       );
+      ref.read(messageSizeTrackerProvider).record(size);
     } catch (e) {
       debugPrint("Profile sync failed: $e");
     }
@@ -245,12 +249,13 @@ class ChatController extends AsyncNotifier<void> {
         DateTime.now(),
       );
 
-      wsService.sendMessage(
+      final size = wsService.sendMessage(
         messageId: const Uuid().v4(),
         senderPubKey: myPubKey,
         recipientPubKey: contact.publicKey,
         encryptedBlob: encryptedBlob,
       );
+      ref.read(messageSizeTrackerProvider).record(size);
     } catch (e) {
       debugPrint("Failed to notify read status: $e");
     }

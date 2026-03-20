@@ -98,6 +98,18 @@ class SecureStorageService {
     return int.tryParse(value);
   }
 
+  Future<void> setMaskTrafficEnabled(String publicKey, bool enabled) async {
+    await _storage.write(
+      key: '${publicKey}_mask_traffic',
+      value: enabled.toString(),
+    );
+  }
+
+  Future<bool> getMaskTrafficEnabled(String publicKey) async {
+    final value = await _storage.read(key: '${publicKey}_mask_traffic');
+    return value == 'true';
+  }
+
   Future<void> wipeAccountData(String publicKey) async {
     await _storage.delete(key: _privateKeyId(publicKey));
     await _storage.delete(key: _dbKeyId(publicKey));

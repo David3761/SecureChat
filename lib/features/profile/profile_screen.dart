@@ -1,16 +1,19 @@
 import 'dart:ui';
 
 import 'package:chat/core/theme/theme.dart';
+import 'package:chat/features/disappearing_messages/show_disappearing_picker.dart';
+import 'package:chat/mask_traffic/show_traffic_mask_info.dart';
+import 'package:chat/features/profile/edit_nickname_dialog.dart';
 import 'package:chat/core/widgets/settings_option.dart';
 import 'package:chat/core/widgets/titled_settings_section.dart';
-import 'package:chat/features/disappearing_messages/disappearing_options.dart';
+import 'package:chat/features/profile/show_qr_modal.dart';
+import 'package:chat/mask_traffic/mask_traffic_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/app_router.dart';
 import '../../core/providers.dart';
@@ -57,69 +60,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('$label copied to clipboard')));
-    }
-  }
-
-  Future<void> _showEditNicknameDialog(
-    String publicKey,
-    String currentNickname,
-  ) async {
-    final controller = TextEditingController(text: currentNickname);
-
-    final platform = Theme.of(context).platform;
-    final isIOS = platform == TargetPlatform.iOS;
-
-    final newName = await showAdaptiveDialog<String>(
-      context: context,
-      builder: (context) {
-        return AlertDialog.adaptive(
-          title: const Text('Edit Profile Name'),
-          content: isIOS
-              ? CupertinoTextField(
-                  controller: controller,
-                  placeholder: 'Enter new name',
-                  autofocus: true,
-                  textCapitalization: TextCapitalization.words,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                )
-              : TextField(
-                  controller: controller,
-                  decoration: const InputDecoration(hintText: 'Enter new name'),
-                  autofocus: true,
-                  textCapitalization: TextCapitalization.words,
-                ),
-          actions: [
-            if (isIOS) ...[
-              CupertinoDialogAction(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              CupertinoDialogAction(
-                isDefaultAction: true,
-                onPressed: () => Navigator.pop(context, controller.text.trim()),
-                child: const Text('Save'),
-              ),
-            ] else ...[
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, controller.text.trim()),
-                child: const Text('Save'),
-              ),
-            ],
-          ],
-        );
-      },
-    );
-
-    if (newName != null && newName.isNotEmpty && newName != currentNickname) {
-      await ref.read(keyControllerProvider.notifier).updateNickname(newName);
-      _loadAccounts();
     }
   }
 
@@ -194,201 +134,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  void showQrModal(String activePubKey) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.85,
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'My QR Code',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 40),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: QrImageView(
-                  data: activePubKey,
-                  version: QrVersions.auto,
-                  size: 240.0,
-                  backgroundColor: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 40),
-              const Text(
-                'OR SEND YOUR PUBLIC KEY',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              InkWell(
-                onTap: () => _copyToClipboard(activePubKey, 'Public Key'),
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Colors.grey.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          activePubKey,
-                          style: const TextStyle(
-                            fontFamily: 'Courier',
-                            fontSize: 13,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      const Icon(Icons.copy, size: 20, color: AppColors.grey),
-                    ],
-                  ),
-                ),
-              ),
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Done'),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _showDisappearingPicker(String publicKey) async {
-    final storage = ref.read(secureStorageProvider);
-    final currentSeconds = await storage.getDefaultDisappearingSeconds(
-      publicKey,
-    );
-
-    if (!mounted) return;
-
-    await showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: AppColors.secondaryBackground,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 10),
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.onSecondaryBackground.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Default disappearing messages',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                children: kDisappearingOptions.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final option = entry.value;
-                  final isSelected = currentSeconds == option.seconds;
-                  final isLast = index == kDisappearingOptions.length - 1;
-
-                  return Column(
-                    children: [
-                      ListTile(
-                        title: Text(option.label),
-                        trailing: isSelected
-                            ? const Icon(
-                                Icons.check,
-                                color: AppColors.primaryBlue,
-                                size: 18,
-                              )
-                            : null,
-                        onTap: () async {
-                          await storage.saveDefaultDisappearingSeconds(
-                            publicKey,
-                            option.seconds,
-                          );
-                          if (context.mounted) Navigator.pop(context);
-                        },
-                      ),
-                      if (!isLast)
-                        const Divider(height: 1, indent: 16, endIndent: 16),
-                    ],
-                  );
-                }).toList(),
-              ),
-            ),
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final keyState = ref.watch(keyControllerProvider);
@@ -405,9 +150,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             delegate: ProfileHeaderDelegate(
               paddingTop: topPadding,
               activeNickname: activeNickname,
-              onEditNickname: () =>
-                  _showEditNicknameDialog(activePubKey, activeNickname),
-              onShowQr: () => showQrModal(activePubKey),
+              onEditNickname: () => showEditNicknameDialog(
+                context,
+                activePubKey,
+                activeNickname,
+                _loadAccounts,
+                ref,
+              ),
+              onShowQr: () =>
+                  showQrModal(context, activePubKey, _copyToClipboard),
               backgroundColor: AppColors.secondaryBackground,
               scrolledColor: AppColors.secondaryBackground.withValues(
                 alpha: 0.10,
@@ -486,7 +237,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       SettingsOption(
                         title: 'Dissappearing messages',
                         iconData: FontAwesomeIcons.clock,
-                        callback: () => _showDisappearingPicker(activePubKey),
+                        callback: () => showDisappearingPicker(
+                          context,
+                          ref,
+                          mounted,
+                          activePubKey,
+                        ),
                       ),
                       SettingsOption(
                         title: 'Blocked contacts',
@@ -495,6 +251,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           context,
                           AppRouter.blockedContacts,
                         ),
+                      ),
+                      SettingsOption(
+                        title: 'Mask traffic',
+                        iconData: FontAwesomeIcons.server,
+                        callback: () {},
+                        hasArrow: false,
+                        onInfoPressed: () => showMaskTrafficInfo(context),
+                        trailing: ref
+                            .watch(maskTrafficProvider)
+                            .maybeWhen(
+                              data: (enabled) => Transform.scale(
+                                scale: 0.75,
+                                child: Switch(
+                                  value: enabled,
+                                  onChanged: (_) => ref
+                                      .read(maskTrafficProvider.notifier)
+                                      .toggle(),
+                                  activeThumbColor: AppColors.primaryBlue,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                              ),
+                              orElse: () => const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
                       ),
                       SettingsOption(
                         title: 'App lock',
@@ -521,11 +307,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             BlendMode.srcIn,
                           ),
                         ),
-                        callback: () {},
-                      ),
-                      SettingsOption(
-                        title: 'Mask traffic',
-                        iconData: FontAwesomeIcons.server,
                         callback: () {},
                       ),
                       SettingsOption(

@@ -235,7 +235,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         child: TextField(
                           controller: _messageController,
                           decoration: InputDecoration(
-                            hintText: 'Secure message...',
+                            hintText: 'Message...',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(24),
                               borderSide: BorderSide.none,

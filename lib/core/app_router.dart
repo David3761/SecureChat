@@ -1,5 +1,6 @@
 import 'package:chat/core/database/app_database.dart';
 import 'package:chat/core/theme/theme.dart';
+import 'package:chat/core/widgets/qr_scanner_sheet.dart';
 import 'package:chat/features/chat/chat_screen.dart';
 import 'package:chat/features/contacts/blocked_contacts_screen.dart';
 import 'package:chat/features/contacts/contact_details_screen.dart';
@@ -27,6 +28,7 @@ class AppRouter {
   static const String contactDetails = '/contact_details';
   static const String contactRequests = '/contact_requests';
   static const String blockedContacts = '/blocked_contacts';
+  static const String qrScanner = '/qr_scanner';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -57,6 +59,11 @@ class AppRouter {
         final contact = settings.arguments as Contact;
         return CupertinoPageRoute(
           builder: (_) => ContactDetailsScreen(contact: contact),
+        );
+      case qrScanner:
+        final onScan = settings.arguments as Function(String);
+        return CupertinoPageRoute(
+          builder: (_) => QrScannerScreen(onScanned: onScan),
         );
       default:
         return CupertinoPageRoute(builder: (_) => MainScreen());

@@ -12,6 +12,8 @@ class SettingsOption extends StatelessWidget {
   final bool? hasArrow;
   final bool? red;
   final bool? hasDivider;
+  final Widget? trailing;
+  final VoidCallback? onInfoPressed;
 
   const SettingsOption({
     super.key,
@@ -22,6 +24,8 @@ class SettingsOption extends StatelessWidget {
     this.hasArrow,
     this.red,
     this.hasDivider,
+    this.trailing,
+    this.onInfoPressed,
   }) : assert(
          (iconData != null && customIcon == null) ||
              (iconData == null && customIcon != null),
@@ -49,7 +53,7 @@ class SettingsOption extends StatelessWidget {
                           size: 22,
                         )
                       : customIcon ?? SizedBox(width: 22),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Text(
@@ -64,18 +68,32 @@ class SettingsOption extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Spacer(),
-                  hasArrow != null && hasArrow == false
-                      ? SizedBox()
-                      : SvgPicture.asset(
-                          'assets/right_arrow.svg',
-                          height: 20,
-                          width: 20,
-                          colorFilter: ColorFilter.mode(
-                            const Color.fromARGB(164, 101, 100, 98),
-                            BlendMode.srcIn,
-                          ),
+                  const Spacer(),
+                  if (trailing != null)
+                    trailing!
+                  else if (hasArrow != null && hasArrow == false)
+                    SvgPicture.asset(
+                      'assets/right_arrow.svg',
+                      height: 20,
+                      width: 20,
+                      colorFilter: ColorFilter.mode(
+                        const Color.fromARGB(164, 101, 100, 98),
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  if (onInfoPressed != null)
+                    GestureDetector(
+                      onTap: onInfoPressed,
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FaIcon(
+                          FontAwesomeIcons.circleInfo,
+                          size: 16,
+                          color: AppColors.onSecondaryBackground,
                         ),
+                      ),
+                    ),
                 ],
               ),
               hasDivider != null && hasDivider == false

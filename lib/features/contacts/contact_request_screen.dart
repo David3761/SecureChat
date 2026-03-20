@@ -23,7 +23,7 @@ class ContactRequestsScreen extends ConsumerWidget {
             return const Center(child: Text('No pending requests.'));
           }
           return ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
             itemCount: contacts.length,
             separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, index) {
@@ -50,19 +50,42 @@ class ContactRequestsScreen extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      visualDensity: VisualDensity.compact,
                       icon: const Icon(
-                        Icons.check,
-                        color: AppColors.primaryBlue,
+                        Icons.block,
+                        size: 20,
+                        color: AppColors.grey,
                       ),
-                      onPressed: () => controller.accept(contact),
+                      onPressed: () => controller.block(contact),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close, color: AppColors.red),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(
+                        Icons.close,
+                        size: 20,
+                        color: AppColors.grey,
+                      ),
                       onPressed: () => controller.decline(contact),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.block, color: AppColors.grey),
-                      onPressed: () => controller.block(contact),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () => controller.accept(contact),
+                      child: const Text('Accept'),
                     ),
                   ],
                 ),

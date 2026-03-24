@@ -122,6 +122,30 @@ class SecureStorageService {
     return value == 'true';
   }
 
+  Future<void> setAppLockEnabled(String publicKey, bool enabled) async {
+    await _storage.write(
+      key: '${publicKey}_app_lock_enabled',
+      value: enabled.toString(),
+    );
+  }
+
+  Future<bool> getAppLockEnabled(String publicKey) async {
+    final value = await _storage.read(key: '${publicKey}_app_lock_enabled');
+    return value == 'true';
+  }
+
+  Future<void> setAppLockTimeout(String publicKey, int seconds) async {
+    await _storage.write(
+      key: '${publicKey}_app_lock_timeout',
+      value: seconds.toString(),
+    );
+  }
+
+  Future<int> getAppLockTimeout(String publicKey) async {
+    final value = await _storage.read(key: '${publicKey}_app_lock_timeout');
+    return int.tryParse(value ?? '') ?? 60;
+  }
+
   Future<void> wipeAccountData(String publicKey) async {
     await _storage.delete(key: _privateKeyId(publicKey));
     await _storage.delete(key: _dbKeyId(publicKey));

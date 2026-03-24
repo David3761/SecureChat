@@ -1,6 +1,9 @@
 import 'dart:ui';
 
 import 'package:chat/core/theme/theme.dart';
+import 'package:chat/features/app_lock/app_lock_info.dart';
+import 'package:chat/features/app_lock/app_lock_service.dart';
+import 'package:chat/features/app_lock/timeout_picker.dart';
 import 'package:chat/features/disappearing_messages/show_disappearing_picker.dart';
 import 'package:chat/features/mask_traffic/show_traffic_mask_info.dart';
 import 'package:chat/features/profile/edit_nickname_dialog.dart';
@@ -265,7 +268,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             BlendMode.srcIn,
                           ),
                         ),
-                        callback: () {},
+                        callback: () {
+                          if (ref.read(appLockProvider).value?.isEnabled ==
+                              true) {
+                            showTimeoutPicker(context, ref);
+                          }
+                        },
+                        hasArrow: false,
+                        onInfoPressed: () => showAppLockInfo(context),
+                        trailing: ref
+                            .watch(appLockProvider)
+                            .maybeWhen(
+                              data: (lockState) => Transform.scale(
+                                scale: 0.75,
+                                child: Switch(
+                                  value: lockState.isEnabled,
+                                  onChanged: (_) => ref
+                                      .read(appLockProvider.notifier)
+                                      .toggleEnabled(),
+                                  activeThumbColor: AppColors.primaryBlue,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                              ),
+                              orElse: () => const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
                       ),
                       //TODO: prevent ss
                       SettingsOption(

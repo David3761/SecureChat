@@ -3,6 +3,7 @@ import 'package:chat/core/database/app_database.dart';
 import 'package:chat/core/providers.dart';
 import 'package:chat/core/security/crypto_service.dart';
 import 'package:chat/core/theme/theme.dart';
+import 'package:chat/features/app_lock/app_lock_service.dart';
 import 'package:chat/features/contacts/contact_request_controller.dart';
 import 'package:chat/features/contacts/contact_request_modal.dart';
 import 'package:chat/features/disappearing_messages/disappearing_service.dart';
@@ -37,10 +38,12 @@ class AppEntry extends ConsumerStatefulWidget {
   ConsumerState<AppEntry> createState() => _AppEntryState();
 }
 
-class _AppEntryState extends ConsumerState<AppEntry> {
+class _AppEntryState extends ConsumerState<AppEntry>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       ref.read(disappearingMessagesServiceProvider).start();
 
@@ -54,6 +57,26 @@ class _AppEntryState extends ConsumerState<AppEntry> {
         }
       }
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState lifecycleState) {
+    switch (lifecycleState) {
+      case AppLifecycleState.paused:
+        ref.read(appLockProvider.notifier).onAppBackgrounded();
+        break;
+      case AppLifecycleState.resumed:
+        ref.read(appLockProvider.notifier).onAppResumed();
+        break;
+      default:
+        break;
+    }
   }
 
   void _showRequestModal(BuildContext context, Contact contact) {
@@ -103,6 +126,23 @@ class _AppEntryState extends ConsumerState<AppEntry> {
       initialRoute: AppRouter.authWrapper,
       onGenerateRoute: AppRouter.generateRoute,
       navigatorKey: AppRouter.navigatorKey,
+      builder: (context, child) {
+        final lockAsync = ref.watch(appLockProvider);
+
+        final shouldHide = lockAsync.when(
+          loading: () => false,
+          error: (_, _) => false,
+          data: (state) => state.isLocked && state.isEnabled,
+        );
+
+        return Stack(
+          children: [
+            child!,
+            if (shouldHide)
+              const Material(color: Colors.black, child: SizedBox.expand()),
+          ],
+        );
+      },
     );
   }
 }

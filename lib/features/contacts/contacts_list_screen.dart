@@ -7,7 +7,9 @@ import 'package:chat/core/network/connection_controller.dart';
 import 'package:chat/core/providers.dart';
 import 'package:chat/core/theme/theme.dart';
 import 'package:chat/core/widgets/contact_list_item.dart';
+import 'package:chat/core/widgets/group_list_item.dart';
 import 'package:chat/features/contacts/new_chat_bottomsheet.dart';
+import 'package:chat/features/groups/group_repository.dart';
 import 'package:chat/features/key_management/key_controller.dart';
 import 'package:flutter/material.dart' hide ConnectionState;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -87,6 +89,92 @@ class _ContactsListScreenState extends ConsumerState<ContactsListScreen> {
     }
   }
 
+  Future<void> _confirmLeaveGroup(
+    BuildContext context,
+    WidgetRef ref,
+    Group group,
+  ) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Leave Group?'),
+        content: const Text(
+          'Are you sure you want to leave this group? You will no longer receive messages from it.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Leave', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final groupRepo = ref.read(groupRepositoryProvider);
+      if (groupRepo == null) throw Exception('Database not ready.');
+      await groupRepo.deleteGroup(group.groupId);
+    }
+  }
+
+  void _showEllipsisMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.grey.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              ListTile(
+                leading: const FaIcon(FontAwesomeIcons.userClock),
+                title: const Text('Contact Requests'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRouter.contactRequests);
+                },
+              ),
+              ListTile(
+                leading: const FaIcon(FontAwesomeIcons.ban),
+                title: const Text('Blocked Contacts'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRouter.blockedContacts);
+                },
+              ),
+              ListTile(
+                leading: const FaIcon(FontAwesomeIcons.userGroup),
+                title: const Text('New Group'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRouter.createGroup);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showQrScanner(BuildContext context) {
     Navigator.pushNamed(context, AppRouter.qrScanner, arguments: _handleQrScan);
   }
@@ -156,6 +244,7 @@ class _ContactsListScreenState extends ConsumerState<ContactsListScreen> {
   @override
   Widget build(BuildContext context) {
     final contactsAsyncValue = ref.watch(contactsStreamProvider);
+    final groupsAsyncValue = ref.watch(groupsStreamProvider);
     final connectionState = ref.watch(connectionControllerProvider);
 
     return Scaffold(
@@ -203,6 +292,7 @@ class _ContactsListScreenState extends ConsumerState<ContactsListScreen> {
                     ),
                     onAddPressed: () => _showNewChatSheet(context),
                     onScanPressed: () => _showQrScanner(context),
+                    onEllipsisPressed: () => _showEllipsisMenu(context),
                     searchBarBuilder: (textOpacity) => SearchBar(
                       controller: _searchbarController,
                       onChanged: _onSearchChanged,
@@ -240,6 +330,37 @@ class _ContactsListScreenState extends ConsumerState<ContactsListScreen> {
                     ),
                   ),
                 ),
+                // Groups
+                groupsAsyncValue.maybeWhen(
+                  data: (groups) {
+                    final filtered = groups
+                        .where(
+                          (g) =>
+                              _searchQuery.isEmpty ||
+                              (g.name ?? '')
+                                  .toLowerCase()
+                                  .contains(_searchQuery),
+                        )
+                        .toList();
+                    if (filtered.isEmpty) {
+                      return const SliverToBoxAdapter(child: SizedBox.shrink());
+                    }
+                    return SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 22.0),
+                      sliver: SliverList.builder(
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) => GroupListItem(
+                          group: filtered[index],
+                          confirmDelete: _confirmLeaveGroup,
+                        ),
+                      ),
+                    );
+                  },
+                  orElse: () =>
+                      const SliverToBoxAdapter(child: SizedBox.shrink()),
+                ),
+
+                // Contacts
                 contactsAsyncValue.when(
                   loading: () => const SliverFillRemaining(
                     child: Center(child: CircularProgressIndicator()),
@@ -248,7 +369,18 @@ class _ContactsListScreenState extends ConsumerState<ContactsListScreen> {
                     child: Center(child: Text('Error: $error')),
                   ),
                   data: (contacts) {
-                    if (contacts.isEmpty) {
+                    final filteredContacts = contacts
+                        .where(
+                          (c) => c.alias.toLowerCase().contains(_searchQuery),
+                        )
+                        .toList();
+
+                    final groups =
+                        groupsAsyncValue.asData?.value ?? const [];
+                    final bothEmpty =
+                        filteredContacts.isEmpty && groups.isEmpty;
+
+                    if (bothEmpty && _searchQuery.isEmpty) {
                       return const SliverFillRemaining(
                         child: Center(
                           child: Padding(
@@ -262,26 +394,18 @@ class _ContactsListScreenState extends ConsumerState<ContactsListScreen> {
                       );
                     }
 
-                    final filteredContacts = contacts.where((contact) {
-                      return contact.alias.toLowerCase().contains(_searchQuery);
-                    }).toList();
-
                     if (filteredContacts.isEmpty) {
-                      return const SliverFillRemaining(
-                        child: Center(child: Text('No contacts found.')),
-                      );
+                      return const SliverToBoxAdapter(child: SizedBox.shrink());
                     }
 
                     return SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: 22.0),
                       sliver: SliverList.builder(
                         itemCount: filteredContacts.length,
-                        itemBuilder: (context, index) {
-                          return ContactListItem(
-                            contact: filteredContacts[index],
-                            confirmDelete: _confirmDelete,
-                          );
-                        },
+                        itemBuilder: (context, index) => ContactListItem(
+                          contact: filteredContacts[index],
+                          confirmDelete: _confirmDelete,
+                        ),
                       ),
                     );
                   },
@@ -302,6 +426,7 @@ class HeaderDelegate extends SliverPersistentHeaderDelegate {
   final Color scrolledColor;
   final VoidCallback onAddPressed;
   final VoidCallback onScanPressed;
+  final VoidCallback onEllipsisPressed;
 
   HeaderDelegate({
     required this.safeAreaTop,
@@ -310,6 +435,7 @@ class HeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.scrolledColor,
     required this.onAddPressed,
     required this.onScanPressed,
+    required this.onEllipsisPressed,
   });
 
   @override
@@ -404,10 +530,7 @@ class HeaderDelegate extends SliverPersistentHeaderDelegate {
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
-                          onPressed: () => Navigator.pushNamed(
-                            context,
-                            AppRouter.contactRequests,
-                          ),
+                          onPressed: onEllipsisPressed,
                           padding: EdgeInsets.zero,
                           icon: const FaIcon(
                             FontAwesomeIcons.ellipsis,

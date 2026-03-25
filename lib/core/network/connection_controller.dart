@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:chat/core/database/app_database.dart';
 import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/network/incoming_message_handler.dart';
+import 'package:chat/features/groups/group_repository.dart';
 import 'package:chat/features/tor/tor_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
@@ -16,6 +17,7 @@ enum ConnectionState { disconnected, connecting, connected, error }
 class ConnectionController extends Notifier<ConnectionState> {
   StreamSubscription<Map<String, dynamic>>? _messageSubscription;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+  Future<void> _processingChain = Future.value();
 
   @override
   ConnectionState build() {
@@ -113,9 +115,20 @@ class ConnectionController extends Notifier<ConnectionState> {
     _messageSubscription?.cancel();
 
     _messageSubscription = wsService.incomingMessages?.listen(
-      (payload) async {
+      (payload) {
         if (payload['type'] == 'message') {
-          await _processIncomingMessage(payload);
+          final groupId = payload['group_id'] as String?;
+          _processingChain = _processingChain
+              .then((_) {
+                if (groupId != null && groupId.isNotEmpty) {
+                  return _processIncomingGroupMessage(payload, groupId);
+                } else {
+                  return _processIncomingMessage(payload);
+                }
+              })
+              .catchError((e) {
+                debugPrint('Message processing error: $e');
+              });
         }
       },
       onError: (e) {
@@ -220,6 +233,49 @@ class ConnectionController extends Notifier<ConnectionState> {
       debugPrint(
         'Failed to process incoming message. Key mismatch or tampering detected. Error: $e',
       );
+    }
+  }
+
+  Future<void> _processIncomingGroupMessage(
+    Map<String, dynamic> payload,
+    String groupId,
+  ) async {
+    final senderPubKey = payload['sender_pub_key'] as String;
+    final encryptedBlob = payload['encrypted_blob'] as String;
+    final messageId = payload['message_id'] as String;
+
+    final keyState = ref.read(keyControllerProvider);
+    if (keyState.activeSecretKey == null) return;
+    if (senderPubKey == keyState.publicKeyHex) return;
+
+    try {
+      final groupRepo = ref.read(groupRepositoryProvider);
+      if (groupRepo == null) return;
+
+      final group = await groupRepo.getGroupById(groupId);
+      if (group == null) return;
+
+      final cryptoService = ref.read(cryptoServiceProvider);
+      final decryptedPlaintext = cryptoService.decryptMessage(
+        encryptedBase64: encryptedBlob,
+        mySecretKey: keyState.activeSecretKey!,
+        theirPublicKeyHex: senderPubKey,
+      );
+
+      final data = jsonDecode(decryptedPlaintext) as Map<String, dynamic>;
+
+      if (data['type'] == 'group_text') {
+        await groupRepo.saveGroupMessage(
+          messageId: messageId,
+          groupId: groupId,
+          senderPubKey: senderPubKey,
+          content: data['content'] as String,
+          isFromMe: false,
+        );
+        debugPrint('Saved incoming group message in group $groupId.');
+      }
+    } catch (e) {
+      debugPrint('Failed to process incoming group message: $e');
     }
   }
 }

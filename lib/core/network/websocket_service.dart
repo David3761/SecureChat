@@ -132,6 +132,28 @@ class WebSocketService {
     return payload.length;
   }
 
+  void sendGroupMessage({
+    required String messageId,
+    required String groupId,
+    required String senderPubKey,
+    required List<Map<String, String>> recipients,
+  }) {
+    if (_socket == null || _socket!.readyState != WebSocket.open) {
+      throw Exception('WebSocket is not connected.');
+    }
+
+    final payload = jsonEncode({
+      'type': 'group_message',
+      'message_id': messageId,
+      'group_id': groupId,
+      'sender_pub_key': senderPubKey,
+      'recipients': recipients,
+    });
+
+    _socket!.add(payload);
+    debugPrint('Group message payload dispatched to server.');
+  }
+
   void sendDummy(String blob) {
     if (!isConnected) return;
     _socket!.add(jsonEncode({'type': 'dummy', 'blob': blob}));

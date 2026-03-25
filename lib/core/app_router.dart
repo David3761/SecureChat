@@ -5,6 +5,9 @@ import 'package:chat/features/chat/chat_screen.dart';
 import 'package:chat/features/contacts/blocked_contacts_screen.dart';
 import 'package:chat/features/contacts/contact_details_screen.dart';
 import 'package:chat/features/contacts/contact_request_screen.dart';
+import 'package:chat/features/groups/create_group_screen.dart';
+import 'package:chat/features/groups/group_chat_screen.dart';
+import 'package:chat/features/groups/group_details_screen.dart';
 import 'package:chat/features/key_management/key_controller.dart';
 import 'package:chat/features/main/main_screen.dart';
 import 'package:chat/features/profile/profile_screen.dart';
@@ -29,6 +32,9 @@ class AppRouter {
   static const String contactRequests = '/contact_requests';
   static const String blockedContacts = '/blocked_contacts';
   static const String qrScanner = '/qr_scanner';
+  static const String createGroup = '/create_group';
+  static const String groupChat = '/group_chat';
+  static const String groupDetails = '/group_details';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -64,6 +70,16 @@ class AppRouter {
         final onScan = settings.arguments as Function(String);
         return CupertinoPageRoute(
           builder: (_) => QrScannerScreen(onScanned: onScan),
+        );
+      case createGroup:
+        return CupertinoPageRoute(builder: (_) => const CreateGroupScreen());
+      case groupChat:
+        final group = settings.arguments as Group;
+        return CupertinoPageRoute(builder: (_) => GroupChatScreen(group: group));
+      case groupDetails:
+        final group = settings.arguments as Group;
+        return CupertinoPageRoute(
+          builder: (_) => GroupDetailsScreen(group: group),
         );
       default:
         return CupertinoPageRoute(builder: (_) => MainScreen());

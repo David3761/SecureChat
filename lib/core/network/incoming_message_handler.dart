@@ -2,6 +2,7 @@ import 'package:chat/core/database/app_database.dart';
 import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/providers.dart';
 import 'package:chat/features/contacts/contact_request_controller.dart';
+import 'package:chat/features/groups/group_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -72,6 +73,36 @@ class IncomingMessageHandler {
           MessageStatus.read,
           DateTime.now(),
         );
+        break;
+      case 'group_invite':
+        debugPrint('[INVITE] received: ${data['group_id']}');
+
+        final groupId = data['group_id'] as String?;
+        if (groupId == null) break;
+
+        final groupRepo = _ref.read(groupRepositoryProvider);
+        if (groupRepo == null) break;
+
+        final existing = await groupRepo.getGroupById(groupId);
+        if (existing != null) break;
+
+        final groupName = data['group_name'] as String?;
+        final adminPubKey = data['admin_pub_key'] as String;
+        final rawMembers = (data['members'] as List)
+            .cast<Map<String, dynamic>>();
+
+        await groupRepo.createGroup(groupId: groupId, name: groupName);
+
+        for (final m in rawMembers) {
+          await groupRepo.addMember(
+            groupId: groupId,
+            publicKey: m['pub_key'] as String,
+            alias: m['alias'] as String,
+            isAdmin: (m['pub_key'] as String) == adminPubKey,
+          );
+        }
+
+        debugPrint('Joined group $groupId via invite.');
         break;
       default:
         debugPrint('Unknown message type: ${data['type']}');

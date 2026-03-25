@@ -31,7 +31,7 @@ class ContactsRepository {
   }) async {
     return await _db
         .into(_db.contacts)
-        .insert(
+        .insertOnConflictUpdate(
           ContactsCompanion.insert(
             alias: alias,
             publicKey: publicKey,

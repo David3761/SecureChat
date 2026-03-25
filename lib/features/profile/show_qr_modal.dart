@@ -69,7 +69,10 @@ void showQrModal(
             ),
             const SizedBox(height: 8),
             InkWell(
-              onTap: () => copyToClipboard(activePubKey, 'Public Key'),
+              onTap: () {
+                copyToClipboard(activePubKey, 'Public Key');
+                Navigator.of(context).pop();
+              },
               borderRadius: BorderRadius.circular(8),
               child: Container(
                 padding: const EdgeInsets.all(16),

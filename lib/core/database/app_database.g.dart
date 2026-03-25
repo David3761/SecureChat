@@ -996,16 +996,1189 @@ class MessagesCompanion extends UpdateCompanion<Message> {
   }
 }
 
+class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GroupsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, groupId, name, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'groups';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Group> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Group map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Group(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $GroupsTable createAlias(String alias) {
+    return $GroupsTable(attachedDatabase, alias);
+  }
+}
+
+class Group extends DataClass implements Insertable<Group> {
+  final int id;
+  final String groupId;
+  final String? name;
+  final DateTime createdAt;
+  const Group({
+    required this.id,
+    required this.groupId,
+    this.name,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['group_id'] = Variable<String>(groupId);
+    if (!nullToAbsent || name != null) {
+      map['name'] = Variable<String>(name);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  GroupsCompanion toCompanion(bool nullToAbsent) {
+    return GroupsCompanion(
+      id: Value(id),
+      groupId: Value(groupId),
+      name: name == null && nullToAbsent ? const Value.absent() : Value(name),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory Group.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Group(
+      id: serializer.fromJson<int>(json['id']),
+      groupId: serializer.fromJson<String>(json['groupId']),
+      name: serializer.fromJson<String?>(json['name']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'groupId': serializer.toJson<String>(groupId),
+      'name': serializer.toJson<String?>(name),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  Group copyWith({
+    int? id,
+    String? groupId,
+    Value<String?> name = const Value.absent(),
+    DateTime? createdAt,
+  }) => Group(
+    id: id ?? this.id,
+    groupId: groupId ?? this.groupId,
+    name: name.present ? name.value : this.name,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  Group copyWithCompanion(GroupsCompanion data) {
+    return Group(
+      id: data.id.present ? data.id.value : this.id,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      name: data.name.present ? data.name.value : this.name,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Group(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, groupId, name, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Group &&
+          other.id == this.id &&
+          other.groupId == this.groupId &&
+          other.name == this.name &&
+          other.createdAt == this.createdAt);
+}
+
+class GroupsCompanion extends UpdateCompanion<Group> {
+  final Value<int> id;
+  final Value<String> groupId;
+  final Value<String?> name;
+  final Value<DateTime> createdAt;
+  const GroupsCompanion({
+    this.id = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  GroupsCompanion.insert({
+    this.id = const Value.absent(),
+    required String groupId,
+    this.name = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  }) : groupId = Value(groupId);
+  static Insertable<Group> custom({
+    Expression<int>? id,
+    Expression<String>? groupId,
+    Expression<String>? name,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (groupId != null) 'group_id': groupId,
+      if (name != null) 'name': name,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  GroupsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? groupId,
+    Value<String?>? name,
+    Value<DateTime>? createdAt,
+  }) {
+    return GroupsCompanion(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      name: name ?? this.name,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroupsCompanion(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $GroupMembersTable extends GroupMembers
+    with TableInfo<$GroupMembersTable, GroupMember> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GroupMembersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _publicKeyMeta = const VerificationMeta(
+    'publicKey',
+  );
+  @override
+  late final GeneratedColumn<String> publicKey = GeneratedColumn<String>(
+    'public_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _aliasMeta = const VerificationMeta('alias');
+  @override
+  late final GeneratedColumn<String> alias = GeneratedColumn<String>(
+    'alias',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isAdminMeta = const VerificationMeta(
+    'isAdmin',
+  );
+  @override
+  late final GeneratedColumn<bool> isAdmin = GeneratedColumn<bool>(
+    'is_admin',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_admin" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    groupId,
+    publicKey,
+    alias,
+    isAdmin,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'group_members';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<GroupMember> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('public_key')) {
+      context.handle(
+        _publicKeyMeta,
+        publicKey.isAcceptableOrUnknown(data['public_key']!, _publicKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_publicKeyMeta);
+    }
+    if (data.containsKey('alias')) {
+      context.handle(
+        _aliasMeta,
+        alias.isAcceptableOrUnknown(data['alias']!, _aliasMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_aliasMeta);
+    }
+    if (data.containsKey('is_admin')) {
+      context.handle(
+        _isAdminMeta,
+        isAdmin.isAcceptableOrUnknown(data['is_admin']!, _isAdminMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {groupId, publicKey},
+  ];
+  @override
+  GroupMember map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GroupMember(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      publicKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}public_key'],
+      )!,
+      alias: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}alias'],
+      )!,
+      isAdmin: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_admin'],
+      )!,
+    );
+  }
+
+  @override
+  $GroupMembersTable createAlias(String alias) {
+    return $GroupMembersTable(attachedDatabase, alias);
+  }
+}
+
+class GroupMember extends DataClass implements Insertable<GroupMember> {
+  final int id;
+  final String groupId;
+  final String publicKey;
+  final String alias;
+  final bool isAdmin;
+  const GroupMember({
+    required this.id,
+    required this.groupId,
+    required this.publicKey,
+    required this.alias,
+    required this.isAdmin,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['group_id'] = Variable<String>(groupId);
+    map['public_key'] = Variable<String>(publicKey);
+    map['alias'] = Variable<String>(alias);
+    map['is_admin'] = Variable<bool>(isAdmin);
+    return map;
+  }
+
+  GroupMembersCompanion toCompanion(bool nullToAbsent) {
+    return GroupMembersCompanion(
+      id: Value(id),
+      groupId: Value(groupId),
+      publicKey: Value(publicKey),
+      alias: Value(alias),
+      isAdmin: Value(isAdmin),
+    );
+  }
+
+  factory GroupMember.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GroupMember(
+      id: serializer.fromJson<int>(json['id']),
+      groupId: serializer.fromJson<String>(json['groupId']),
+      publicKey: serializer.fromJson<String>(json['publicKey']),
+      alias: serializer.fromJson<String>(json['alias']),
+      isAdmin: serializer.fromJson<bool>(json['isAdmin']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'groupId': serializer.toJson<String>(groupId),
+      'publicKey': serializer.toJson<String>(publicKey),
+      'alias': serializer.toJson<String>(alias),
+      'isAdmin': serializer.toJson<bool>(isAdmin),
+    };
+  }
+
+  GroupMember copyWith({
+    int? id,
+    String? groupId,
+    String? publicKey,
+    String? alias,
+    bool? isAdmin,
+  }) => GroupMember(
+    id: id ?? this.id,
+    groupId: groupId ?? this.groupId,
+    publicKey: publicKey ?? this.publicKey,
+    alias: alias ?? this.alias,
+    isAdmin: isAdmin ?? this.isAdmin,
+  );
+  GroupMember copyWithCompanion(GroupMembersCompanion data) {
+    return GroupMember(
+      id: data.id.present ? data.id.value : this.id,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      publicKey: data.publicKey.present ? data.publicKey.value : this.publicKey,
+      alias: data.alias.present ? data.alias.value : this.alias,
+      isAdmin: data.isAdmin.present ? data.isAdmin.value : this.isAdmin,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroupMember(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('publicKey: $publicKey, ')
+          ..write('alias: $alias, ')
+          ..write('isAdmin: $isAdmin')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, groupId, publicKey, alias, isAdmin);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GroupMember &&
+          other.id == this.id &&
+          other.groupId == this.groupId &&
+          other.publicKey == this.publicKey &&
+          other.alias == this.alias &&
+          other.isAdmin == this.isAdmin);
+}
+
+class GroupMembersCompanion extends UpdateCompanion<GroupMember> {
+  final Value<int> id;
+  final Value<String> groupId;
+  final Value<String> publicKey;
+  final Value<String> alias;
+  final Value<bool> isAdmin;
+  const GroupMembersCompanion({
+    this.id = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.publicKey = const Value.absent(),
+    this.alias = const Value.absent(),
+    this.isAdmin = const Value.absent(),
+  });
+  GroupMembersCompanion.insert({
+    this.id = const Value.absent(),
+    required String groupId,
+    required String publicKey,
+    required String alias,
+    this.isAdmin = const Value.absent(),
+  }) : groupId = Value(groupId),
+       publicKey = Value(publicKey),
+       alias = Value(alias);
+  static Insertable<GroupMember> custom({
+    Expression<int>? id,
+    Expression<String>? groupId,
+    Expression<String>? publicKey,
+    Expression<String>? alias,
+    Expression<bool>? isAdmin,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (groupId != null) 'group_id': groupId,
+      if (publicKey != null) 'public_key': publicKey,
+      if (alias != null) 'alias': alias,
+      if (isAdmin != null) 'is_admin': isAdmin,
+    });
+  }
+
+  GroupMembersCompanion copyWith({
+    Value<int>? id,
+    Value<String>? groupId,
+    Value<String>? publicKey,
+    Value<String>? alias,
+    Value<bool>? isAdmin,
+  }) {
+    return GroupMembersCompanion(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      publicKey: publicKey ?? this.publicKey,
+      alias: alias ?? this.alias,
+      isAdmin: isAdmin ?? this.isAdmin,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (publicKey.present) {
+      map['public_key'] = Variable<String>(publicKey.value);
+    }
+    if (alias.present) {
+      map['alias'] = Variable<String>(alias.value);
+    }
+    if (isAdmin.present) {
+      map['is_admin'] = Variable<bool>(isAdmin.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroupMembersCompanion(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('publicKey: $publicKey, ')
+          ..write('alias: $alias, ')
+          ..write('isAdmin: $isAdmin')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $GroupMessagesTable extends GroupMessages
+    with TableInfo<$GroupMessagesTable, GroupMessage> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GroupMessagesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _messageIdMeta = const VerificationMeta(
+    'messageId',
+  );
+  @override
+  late final GeneratedColumn<String> messageId = GeneratedColumn<String>(
+    'message_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _senderPubKeyMeta = const VerificationMeta(
+    'senderPubKey',
+  );
+  @override
+  late final GeneratedColumn<String> senderPubKey = GeneratedColumn<String>(
+    'sender_pub_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _contentMeta = const VerificationMeta(
+    'content',
+  );
+  @override
+  late final GeneratedColumn<String> content = GeneratedColumn<String>(
+    'content',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isFromMeMeta = const VerificationMeta(
+    'isFromMe',
+  );
+  @override
+  late final GeneratedColumn<bool> isFromMe = GeneratedColumn<bool>(
+    'is_from_me',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_from_me" IN (0, 1))',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<MessageStatus, int> status =
+      GeneratedColumn<int>(
+        'status',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      ).withConverter<MessageStatus>($GroupMessagesTable.$converterstatus);
+  static const VerificationMeta _timestampMeta = const VerificationMeta(
+    'timestamp',
+  );
+  @override
+  late final GeneratedColumn<DateTime> timestamp = GeneratedColumn<DateTime>(
+    'timestamp',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    messageId,
+    groupId,
+    senderPubKey,
+    content,
+    isFromMe,
+    status,
+    timestamp,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'group_messages';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<GroupMessage> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('message_id')) {
+      context.handle(
+        _messageIdMeta,
+        messageId.isAcceptableOrUnknown(data['message_id']!, _messageIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_messageIdMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('sender_pub_key')) {
+      context.handle(
+        _senderPubKeyMeta,
+        senderPubKey.isAcceptableOrUnknown(
+          data['sender_pub_key']!,
+          _senderPubKeyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_senderPubKeyMeta);
+    }
+    if (data.containsKey('content')) {
+      context.handle(
+        _contentMeta,
+        content.isAcceptableOrUnknown(data['content']!, _contentMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_contentMeta);
+    }
+    if (data.containsKey('is_from_me')) {
+      context.handle(
+        _isFromMeMeta,
+        isFromMe.isAcceptableOrUnknown(data['is_from_me']!, _isFromMeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_isFromMeMeta);
+    }
+    if (data.containsKey('timestamp')) {
+      context.handle(
+        _timestampMeta,
+        timestamp.isAcceptableOrUnknown(data['timestamp']!, _timestampMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GroupMessage map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GroupMessage(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      messageId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}message_id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      senderPubKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}sender_pub_key'],
+      )!,
+      content: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content'],
+      )!,
+      isFromMe: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_from_me'],
+      )!,
+      status: $GroupMessagesTable.$converterstatus.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}status'],
+        )!,
+      ),
+      timestamp: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}timestamp'],
+      )!,
+    );
+  }
+
+  @override
+  $GroupMessagesTable createAlias(String alias) {
+    return $GroupMessagesTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<MessageStatus, int, int> $converterstatus =
+      const EnumIndexConverter<MessageStatus>(MessageStatus.values);
+}
+
+class GroupMessage extends DataClass implements Insertable<GroupMessage> {
+  final int id;
+  final String messageId;
+  final String groupId;
+  final String senderPubKey;
+  final String content;
+  final bool isFromMe;
+  final MessageStatus status;
+  final DateTime timestamp;
+  const GroupMessage({
+    required this.id,
+    required this.messageId,
+    required this.groupId,
+    required this.senderPubKey,
+    required this.content,
+    required this.isFromMe,
+    required this.status,
+    required this.timestamp,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['message_id'] = Variable<String>(messageId);
+    map['group_id'] = Variable<String>(groupId);
+    map['sender_pub_key'] = Variable<String>(senderPubKey);
+    map['content'] = Variable<String>(content);
+    map['is_from_me'] = Variable<bool>(isFromMe);
+    {
+      map['status'] = Variable<int>(
+        $GroupMessagesTable.$converterstatus.toSql(status),
+      );
+    }
+    map['timestamp'] = Variable<DateTime>(timestamp);
+    return map;
+  }
+
+  GroupMessagesCompanion toCompanion(bool nullToAbsent) {
+    return GroupMessagesCompanion(
+      id: Value(id),
+      messageId: Value(messageId),
+      groupId: Value(groupId),
+      senderPubKey: Value(senderPubKey),
+      content: Value(content),
+      isFromMe: Value(isFromMe),
+      status: Value(status),
+      timestamp: Value(timestamp),
+    );
+  }
+
+  factory GroupMessage.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GroupMessage(
+      id: serializer.fromJson<int>(json['id']),
+      messageId: serializer.fromJson<String>(json['messageId']),
+      groupId: serializer.fromJson<String>(json['groupId']),
+      senderPubKey: serializer.fromJson<String>(json['senderPubKey']),
+      content: serializer.fromJson<String>(json['content']),
+      isFromMe: serializer.fromJson<bool>(json['isFromMe']),
+      status: $GroupMessagesTable.$converterstatus.fromJson(
+        serializer.fromJson<int>(json['status']),
+      ),
+      timestamp: serializer.fromJson<DateTime>(json['timestamp']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'messageId': serializer.toJson<String>(messageId),
+      'groupId': serializer.toJson<String>(groupId),
+      'senderPubKey': serializer.toJson<String>(senderPubKey),
+      'content': serializer.toJson<String>(content),
+      'isFromMe': serializer.toJson<bool>(isFromMe),
+      'status': serializer.toJson<int>(
+        $GroupMessagesTable.$converterstatus.toJson(status),
+      ),
+      'timestamp': serializer.toJson<DateTime>(timestamp),
+    };
+  }
+
+  GroupMessage copyWith({
+    int? id,
+    String? messageId,
+    String? groupId,
+    String? senderPubKey,
+    String? content,
+    bool? isFromMe,
+    MessageStatus? status,
+    DateTime? timestamp,
+  }) => GroupMessage(
+    id: id ?? this.id,
+    messageId: messageId ?? this.messageId,
+    groupId: groupId ?? this.groupId,
+    senderPubKey: senderPubKey ?? this.senderPubKey,
+    content: content ?? this.content,
+    isFromMe: isFromMe ?? this.isFromMe,
+    status: status ?? this.status,
+    timestamp: timestamp ?? this.timestamp,
+  );
+  GroupMessage copyWithCompanion(GroupMessagesCompanion data) {
+    return GroupMessage(
+      id: data.id.present ? data.id.value : this.id,
+      messageId: data.messageId.present ? data.messageId.value : this.messageId,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      senderPubKey: data.senderPubKey.present
+          ? data.senderPubKey.value
+          : this.senderPubKey,
+      content: data.content.present ? data.content.value : this.content,
+      isFromMe: data.isFromMe.present ? data.isFromMe.value : this.isFromMe,
+      status: data.status.present ? data.status.value : this.status,
+      timestamp: data.timestamp.present ? data.timestamp.value : this.timestamp,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroupMessage(')
+          ..write('id: $id, ')
+          ..write('messageId: $messageId, ')
+          ..write('groupId: $groupId, ')
+          ..write('senderPubKey: $senderPubKey, ')
+          ..write('content: $content, ')
+          ..write('isFromMe: $isFromMe, ')
+          ..write('status: $status, ')
+          ..write('timestamp: $timestamp')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    messageId,
+    groupId,
+    senderPubKey,
+    content,
+    isFromMe,
+    status,
+    timestamp,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GroupMessage &&
+          other.id == this.id &&
+          other.messageId == this.messageId &&
+          other.groupId == this.groupId &&
+          other.senderPubKey == this.senderPubKey &&
+          other.content == this.content &&
+          other.isFromMe == this.isFromMe &&
+          other.status == this.status &&
+          other.timestamp == this.timestamp);
+}
+
+class GroupMessagesCompanion extends UpdateCompanion<GroupMessage> {
+  final Value<int> id;
+  final Value<String> messageId;
+  final Value<String> groupId;
+  final Value<String> senderPubKey;
+  final Value<String> content;
+  final Value<bool> isFromMe;
+  final Value<MessageStatus> status;
+  final Value<DateTime> timestamp;
+  const GroupMessagesCompanion({
+    this.id = const Value.absent(),
+    this.messageId = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.senderPubKey = const Value.absent(),
+    this.content = const Value.absent(),
+    this.isFromMe = const Value.absent(),
+    this.status = const Value.absent(),
+    this.timestamp = const Value.absent(),
+  });
+  GroupMessagesCompanion.insert({
+    this.id = const Value.absent(),
+    required String messageId,
+    required String groupId,
+    required String senderPubKey,
+    required String content,
+    required bool isFromMe,
+    required MessageStatus status,
+    this.timestamp = const Value.absent(),
+  }) : messageId = Value(messageId),
+       groupId = Value(groupId),
+       senderPubKey = Value(senderPubKey),
+       content = Value(content),
+       isFromMe = Value(isFromMe),
+       status = Value(status);
+  static Insertable<GroupMessage> custom({
+    Expression<int>? id,
+    Expression<String>? messageId,
+    Expression<String>? groupId,
+    Expression<String>? senderPubKey,
+    Expression<String>? content,
+    Expression<bool>? isFromMe,
+    Expression<int>? status,
+    Expression<DateTime>? timestamp,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (messageId != null) 'message_id': messageId,
+      if (groupId != null) 'group_id': groupId,
+      if (senderPubKey != null) 'sender_pub_key': senderPubKey,
+      if (content != null) 'content': content,
+      if (isFromMe != null) 'is_from_me': isFromMe,
+      if (status != null) 'status': status,
+      if (timestamp != null) 'timestamp': timestamp,
+    });
+  }
+
+  GroupMessagesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? messageId,
+    Value<String>? groupId,
+    Value<String>? senderPubKey,
+    Value<String>? content,
+    Value<bool>? isFromMe,
+    Value<MessageStatus>? status,
+    Value<DateTime>? timestamp,
+  }) {
+    return GroupMessagesCompanion(
+      id: id ?? this.id,
+      messageId: messageId ?? this.messageId,
+      groupId: groupId ?? this.groupId,
+      senderPubKey: senderPubKey ?? this.senderPubKey,
+      content: content ?? this.content,
+      isFromMe: isFromMe ?? this.isFromMe,
+      status: status ?? this.status,
+      timestamp: timestamp ?? this.timestamp,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (messageId.present) {
+      map['message_id'] = Variable<String>(messageId.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (senderPubKey.present) {
+      map['sender_pub_key'] = Variable<String>(senderPubKey.value);
+    }
+    if (content.present) {
+      map['content'] = Variable<String>(content.value);
+    }
+    if (isFromMe.present) {
+      map['is_from_me'] = Variable<bool>(isFromMe.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<int>(
+        $GroupMessagesTable.$converterstatus.toSql(status.value),
+      );
+    }
+    if (timestamp.present) {
+      map['timestamp'] = Variable<DateTime>(timestamp.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroupMessagesCompanion(')
+          ..write('id: $id, ')
+          ..write('messageId: $messageId, ')
+          ..write('groupId: $groupId, ')
+          ..write('senderPubKey: $senderPubKey, ')
+          ..write('content: $content, ')
+          ..write('isFromMe: $isFromMe, ')
+          ..write('status: $status, ')
+          ..write('timestamp: $timestamp')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $ContactsTable contacts = $ContactsTable(this);
   late final $MessagesTable messages = $MessagesTable(this);
+  late final $GroupsTable groups = $GroupsTable(this);
+  late final $GroupMembersTable groupMembers = $GroupMembersTable(this);
+  late final $GroupMessagesTable groupMessages = $GroupMessagesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [contacts, messages];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    contacts,
+    messages,
+    groups,
+    groupMembers,
+    groupMessages,
+  ];
 }
 
 typedef $$ContactsTableCreateCompanionBuilder =
@@ -1708,6 +2881,623 @@ typedef $$MessagesTableProcessedTableManager =
       Message,
       PrefetchHooks Function({bool contactId})
     >;
+typedef $$GroupsTableCreateCompanionBuilder =
+    GroupsCompanion Function({
+      Value<int> id,
+      required String groupId,
+      Value<String?> name,
+      Value<DateTime> createdAt,
+    });
+typedef $$GroupsTableUpdateCompanionBuilder =
+    GroupsCompanion Function({
+      Value<int> id,
+      Value<String> groupId,
+      Value<String?> name,
+      Value<DateTime> createdAt,
+    });
+
+class $$GroupsTableFilterComposer
+    extends Composer<_$AppDatabase, $GroupsTable> {
+  $$GroupsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$GroupsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GroupsTable> {
+  $$GroupsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$GroupsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GroupsTable> {
+  $$GroupsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$GroupsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $GroupsTable,
+          Group,
+          $$GroupsTableFilterComposer,
+          $$GroupsTableOrderingComposer,
+          $$GroupsTableAnnotationComposer,
+          $$GroupsTableCreateCompanionBuilder,
+          $$GroupsTableUpdateCompanionBuilder,
+          (Group, BaseReferences<_$AppDatabase, $GroupsTable, Group>),
+          Group,
+          PrefetchHooks Function()
+        > {
+  $$GroupsTableTableManager(_$AppDatabase db, $GroupsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GroupsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GroupsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GroupsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> groupId = const Value.absent(),
+                Value<String?> name = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => GroupsCompanion(
+                id: id,
+                groupId: groupId,
+                name: name,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String groupId,
+                Value<String?> name = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => GroupsCompanion.insert(
+                id: id,
+                groupId: groupId,
+                name: name,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$GroupsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $GroupsTable,
+      Group,
+      $$GroupsTableFilterComposer,
+      $$GroupsTableOrderingComposer,
+      $$GroupsTableAnnotationComposer,
+      $$GroupsTableCreateCompanionBuilder,
+      $$GroupsTableUpdateCompanionBuilder,
+      (Group, BaseReferences<_$AppDatabase, $GroupsTable, Group>),
+      Group,
+      PrefetchHooks Function()
+    >;
+typedef $$GroupMembersTableCreateCompanionBuilder =
+    GroupMembersCompanion Function({
+      Value<int> id,
+      required String groupId,
+      required String publicKey,
+      required String alias,
+      Value<bool> isAdmin,
+    });
+typedef $$GroupMembersTableUpdateCompanionBuilder =
+    GroupMembersCompanion Function({
+      Value<int> id,
+      Value<String> groupId,
+      Value<String> publicKey,
+      Value<String> alias,
+      Value<bool> isAdmin,
+    });
+
+class $$GroupMembersTableFilterComposer
+    extends Composer<_$AppDatabase, $GroupMembersTable> {
+  $$GroupMembersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get publicKey => $composableBuilder(
+    column: $table.publicKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get alias => $composableBuilder(
+    column: $table.alias,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isAdmin => $composableBuilder(
+    column: $table.isAdmin,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$GroupMembersTableOrderingComposer
+    extends Composer<_$AppDatabase, $GroupMembersTable> {
+  $$GroupMembersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get publicKey => $composableBuilder(
+    column: $table.publicKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get alias => $composableBuilder(
+    column: $table.alias,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isAdmin => $composableBuilder(
+    column: $table.isAdmin,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$GroupMembersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GroupMembersTable> {
+  $$GroupMembersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get publicKey =>
+      $composableBuilder(column: $table.publicKey, builder: (column) => column);
+
+  GeneratedColumn<String> get alias =>
+      $composableBuilder(column: $table.alias, builder: (column) => column);
+
+  GeneratedColumn<bool> get isAdmin =>
+      $composableBuilder(column: $table.isAdmin, builder: (column) => column);
+}
+
+class $$GroupMembersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $GroupMembersTable,
+          GroupMember,
+          $$GroupMembersTableFilterComposer,
+          $$GroupMembersTableOrderingComposer,
+          $$GroupMembersTableAnnotationComposer,
+          $$GroupMembersTableCreateCompanionBuilder,
+          $$GroupMembersTableUpdateCompanionBuilder,
+          (
+            GroupMember,
+            BaseReferences<_$AppDatabase, $GroupMembersTable, GroupMember>,
+          ),
+          GroupMember,
+          PrefetchHooks Function()
+        > {
+  $$GroupMembersTableTableManager(_$AppDatabase db, $GroupMembersTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GroupMembersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GroupMembersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GroupMembersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> groupId = const Value.absent(),
+                Value<String> publicKey = const Value.absent(),
+                Value<String> alias = const Value.absent(),
+                Value<bool> isAdmin = const Value.absent(),
+              }) => GroupMembersCompanion(
+                id: id,
+                groupId: groupId,
+                publicKey: publicKey,
+                alias: alias,
+                isAdmin: isAdmin,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String groupId,
+                required String publicKey,
+                required String alias,
+                Value<bool> isAdmin = const Value.absent(),
+              }) => GroupMembersCompanion.insert(
+                id: id,
+                groupId: groupId,
+                publicKey: publicKey,
+                alias: alias,
+                isAdmin: isAdmin,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$GroupMembersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $GroupMembersTable,
+      GroupMember,
+      $$GroupMembersTableFilterComposer,
+      $$GroupMembersTableOrderingComposer,
+      $$GroupMembersTableAnnotationComposer,
+      $$GroupMembersTableCreateCompanionBuilder,
+      $$GroupMembersTableUpdateCompanionBuilder,
+      (
+        GroupMember,
+        BaseReferences<_$AppDatabase, $GroupMembersTable, GroupMember>,
+      ),
+      GroupMember,
+      PrefetchHooks Function()
+    >;
+typedef $$GroupMessagesTableCreateCompanionBuilder =
+    GroupMessagesCompanion Function({
+      Value<int> id,
+      required String messageId,
+      required String groupId,
+      required String senderPubKey,
+      required String content,
+      required bool isFromMe,
+      required MessageStatus status,
+      Value<DateTime> timestamp,
+    });
+typedef $$GroupMessagesTableUpdateCompanionBuilder =
+    GroupMessagesCompanion Function({
+      Value<int> id,
+      Value<String> messageId,
+      Value<String> groupId,
+      Value<String> senderPubKey,
+      Value<String> content,
+      Value<bool> isFromMe,
+      Value<MessageStatus> status,
+      Value<DateTime> timestamp,
+    });
+
+class $$GroupMessagesTableFilterComposer
+    extends Composer<_$AppDatabase, $GroupMessagesTable> {
+  $$GroupMessagesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get messageId => $composableBuilder(
+    column: $table.messageId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get senderPubKey => $composableBuilder(
+    column: $table.senderPubKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isFromMe => $composableBuilder(
+    column: $table.isFromMe,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<MessageStatus, MessageStatus, int>
+  get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<DateTime> get timestamp => $composableBuilder(
+    column: $table.timestamp,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$GroupMessagesTableOrderingComposer
+    extends Composer<_$AppDatabase, $GroupMessagesTable> {
+  $$GroupMessagesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get messageId => $composableBuilder(
+    column: $table.messageId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get senderPubKey => $composableBuilder(
+    column: $table.senderPubKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isFromMe => $composableBuilder(
+    column: $table.isFromMe,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get timestamp => $composableBuilder(
+    column: $table.timestamp,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$GroupMessagesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GroupMessagesTable> {
+  $$GroupMessagesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get messageId =>
+      $composableBuilder(column: $table.messageId, builder: (column) => column);
+
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get senderPubKey => $composableBuilder(
+    column: $table.senderPubKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get content =>
+      $composableBuilder(column: $table.content, builder: (column) => column);
+
+  GeneratedColumn<bool> get isFromMe =>
+      $composableBuilder(column: $table.isFromMe, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<MessageStatus, int> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get timestamp =>
+      $composableBuilder(column: $table.timestamp, builder: (column) => column);
+}
+
+class $$GroupMessagesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $GroupMessagesTable,
+          GroupMessage,
+          $$GroupMessagesTableFilterComposer,
+          $$GroupMessagesTableOrderingComposer,
+          $$GroupMessagesTableAnnotationComposer,
+          $$GroupMessagesTableCreateCompanionBuilder,
+          $$GroupMessagesTableUpdateCompanionBuilder,
+          (
+            GroupMessage,
+            BaseReferences<_$AppDatabase, $GroupMessagesTable, GroupMessage>,
+          ),
+          GroupMessage,
+          PrefetchHooks Function()
+        > {
+  $$GroupMessagesTableTableManager(_$AppDatabase db, $GroupMessagesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GroupMessagesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GroupMessagesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GroupMessagesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> messageId = const Value.absent(),
+                Value<String> groupId = const Value.absent(),
+                Value<String> senderPubKey = const Value.absent(),
+                Value<String> content = const Value.absent(),
+                Value<bool> isFromMe = const Value.absent(),
+                Value<MessageStatus> status = const Value.absent(),
+                Value<DateTime> timestamp = const Value.absent(),
+              }) => GroupMessagesCompanion(
+                id: id,
+                messageId: messageId,
+                groupId: groupId,
+                senderPubKey: senderPubKey,
+                content: content,
+                isFromMe: isFromMe,
+                status: status,
+                timestamp: timestamp,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String messageId,
+                required String groupId,
+                required String senderPubKey,
+                required String content,
+                required bool isFromMe,
+                required MessageStatus status,
+                Value<DateTime> timestamp = const Value.absent(),
+              }) => GroupMessagesCompanion.insert(
+                id: id,
+                messageId: messageId,
+                groupId: groupId,
+                senderPubKey: senderPubKey,
+                content: content,
+                isFromMe: isFromMe,
+                status: status,
+                timestamp: timestamp,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$GroupMessagesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $GroupMessagesTable,
+      GroupMessage,
+      $$GroupMessagesTableFilterComposer,
+      $$GroupMessagesTableOrderingComposer,
+      $$GroupMessagesTableAnnotationComposer,
+      $$GroupMessagesTableCreateCompanionBuilder,
+      $$GroupMessagesTableUpdateCompanionBuilder,
+      (
+        GroupMessage,
+        BaseReferences<_$AppDatabase, $GroupMessagesTable, GroupMessage>,
+      ),
+      GroupMessage,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1716,4 +3506,10 @@ class $AppDatabaseManager {
       $$ContactsTableTableManager(_db, _db.contacts);
   $$MessagesTableTableManager get messages =>
       $$MessagesTableTableManager(_db, _db.messages);
+  $$GroupsTableTableManager get groups =>
+      $$GroupsTableTableManager(_db, _db.groups);
+  $$GroupMembersTableTableManager get groupMembers =>
+      $$GroupMembersTableTableManager(_db, _db.groupMembers);
+  $$GroupMessagesTableTableManager get groupMessages =>
+      $$GroupMessagesTableTableManager(_db, _db.groupMessages);
 }

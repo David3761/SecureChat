@@ -8,7 +8,7 @@ import 'tables.dart';
 
 part 'app_database.g.dart';
 
-@DriftDatabase(tables: [Contacts, Messages])
+@DriftDatabase(tables: [Contacts, Messages, Groups, GroupMembers, GroupMessages])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(String publicKey, String encryptionKey)
     : super(_openConnection(publicKey, encryptionKey)) {
@@ -16,7 +16,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration {
@@ -39,6 +39,11 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 6) {
           await m.addColumn(contacts, contacts.isQrInitiated);
+        }
+        if (from < 7) {
+          await m.createTable(groups);
+          await m.createTable(groupMembers);
+          await m.createTable(groupMessages);
         }
       },
       beforeOpen: (details) async {

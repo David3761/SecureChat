@@ -178,6 +178,7 @@ class ChatController extends AsyncNotifier<void> {
       final cryptoService = ref.read(cryptoServiceProvider);
       final wsService = ref.read(webSocketServiceProvider);
       final storageService = ref.read(secureStorageProvider);
+      final messageSizeTracker = ref.read(messageSizeTrackerProvider);
 
       if (keyState.activeSecretKey == null) {
         throw Exception("Secret key is null");
@@ -206,7 +207,7 @@ class ChatController extends AsyncNotifier<void> {
         recipientPubKey: contact.publicKey,
         encryptedBlob: encryptedBase64Blob,
       );
-      ref.read(messageSizeTrackerProvider).record(size);
+      messageSizeTracker.record(size);
     } catch (e) {
       debugPrint("Profile sync failed: $e");
     }

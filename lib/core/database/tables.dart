@@ -26,3 +26,34 @@ class Messages extends Table {
   DateTimeColumn get timestamp => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get readAt => dateTime().nullable()();
 }
+
+class Groups extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get groupId => text().unique()();
+  TextColumn get name => text().nullable()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+}
+
+class GroupMembers extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get groupId => text()();
+  TextColumn get publicKey => text()();
+  TextColumn get alias => text()();
+  BoolColumn get isAdmin => boolean().withDefault(const Constant(false))();
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+    {groupId, publicKey},
+  ];
+}
+
+class GroupMessages extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get messageId => text().unique()();
+  TextColumn get groupId => text()();
+  TextColumn get senderPubKey => text()();
+  TextColumn get content => text()();
+  BoolColumn get isFromMe => boolean()();
+  IntColumn get status => intEnum<MessageStatus>()();
+  DateTimeColumn get timestamp => dateTime().withDefault(currentDateAndTime)();
+}

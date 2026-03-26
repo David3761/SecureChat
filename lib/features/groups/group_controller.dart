@@ -109,6 +109,52 @@ class GroupChatController extends AsyncNotifier<void> {
     }
   }
 
+  Future<void> sendGroupUpdate(Map<String, dynamic> updateFields) async {
+    try {
+      final keyState = ref.read(keyControllerProvider);
+      final cryptoService = ref.read(cryptoServiceProvider);
+      final wsService = ref.read(webSocketServiceProvider);
+      final storageService = ref.read(secureStorageProvider);
+      final groupRepo = ref.read(groupRepositoryProvider);
+
+      if (groupRepo == null) return;
+      if (keyState.activeSecretKey == null) return;
+
+      final myPubKey = await storageService.getLastActiveAccount();
+      if (myPubKey == null) return;
+
+      final members = await groupRepo.getMembersForGroup(groupId);
+
+      final payload = jsonEncode({
+        'type': 'group_update',
+        'group_id': groupId,
+        ...updateFields,
+      });
+
+      final recipients = <Map<String, String>>[];
+      for (final member in members) {
+        if (member.publicKey == myPubKey) continue;
+        final blob = cryptoService.encryptMessage(
+          plainText: payload,
+          mySecretKey: keyState.activeSecretKey!,
+          theirPublicKeyHex: member.publicKey,
+        );
+        recipients.add({'pub_key': member.publicKey, 'encrypted_blob': blob});
+      }
+
+      if (recipients.isEmpty) return;
+
+      wsService.sendGroupMessage(
+        messageId: const Uuid().v4(),
+        groupId: groupId,
+        senderPubKey: myPubKey,
+        recipients: recipients,
+      );
+    } catch (e) {
+      debugPrint('Failed to send group update: $e');
+    }
+  }
+
   Future<void> sendGroupInvite({
     required String recipientPubKey,
     required String? groupName,

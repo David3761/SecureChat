@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:uuid/uuid.dart';
+
 import 'package:chat/core/database/app_database.dart';
 import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/network/incoming_message_handler.dart';
@@ -265,6 +267,11 @@ class ConnectionController extends Notifier<ConnectionState> {
       final data = jsonDecode(decryptedPlaintext) as Map<String, dynamic>;
 
       if (data['type'] == 'group_text') {
+        final sender = await groupRepo.getMember(groupId, senderPubKey);
+        if (sender == null) {
+          debugPrint('Ignored group_text from non-member $senderPubKey.');
+          return;
+        }
         await groupRepo.saveGroupMessage(
           messageId: messageId,
           groupId: groupId,
@@ -273,6 +280,61 @@ class ConnectionController extends Notifier<ConnectionState> {
           isFromMe: false,
         );
         debugPrint('Saved incoming group message in group $groupId.');
+      } else if (data['type'] == 'group_update') {
+        final updateType = data['update_type'] as String?;
+        switch (updateType) {
+          case 'rename':
+            final name = data['name'] as String?;
+            await groupRepo.updateGroupName(groupId, name);
+            debugPrint('Group $groupId renamed to $name.');
+            break;
+          case 'member_added':
+            final addedAlias = data['alias'] as String;
+            await groupRepo.addMember(
+              groupId: groupId,
+              publicKey: data['pub_key'] as String,
+              alias: addedAlias,
+              isAdmin: false,
+            );
+            await groupRepo.saveGroupMessage(
+              messageId: const Uuid().v4(),
+              groupId: groupId,
+              senderPubKey: 'system',
+              content: '$addedAlias was added to the group',
+              isFromMe: false,
+            );
+            debugPrint('Member ${data['pub_key']} added to group $groupId.');
+            break;
+          case 'member_removed':
+            final removedKey = data['pub_key'] as String;
+            final removedAlias = data['alias'] as String? ?? '';
+            final myKey = ref.read(keyControllerProvider).publicKeyHex;
+            await groupRepo.removeMember(groupId, removedKey);
+            await groupRepo.saveGroupMessage(
+              messageId: const Uuid().v4(),
+              groupId: groupId,
+              senderPubKey: 'system',
+              content: removedKey == myKey
+                  ? 'You were removed from this group'
+                  : '$removedAlias was removed from the group',
+              isFromMe: false,
+            );
+            debugPrint('Member $removedKey removed from group $groupId.');
+            break;
+          case 'member_left':
+            final leftKey = data['pub_key'] as String;
+            final leftAlias = data['alias'] as String? ?? '';
+            await groupRepo.removeMember(groupId, leftKey);
+            await groupRepo.saveGroupMessage(
+              messageId: const Uuid().v4(),
+              groupId: groupId,
+              senderPubKey: 'system',
+              content: '$leftAlias has left',
+              isFromMe: false,
+            );
+            debugPrint('Member $leftKey left group $groupId.');
+            break;
+        }
       }
     } catch (e) {
       debugPrint('Failed to process incoming group message: $e');

@@ -37,7 +37,12 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
               if (_scanned) return;
               final barcode = capture.barcodes.firstOrNull;
               final value = barcode?.rawValue;
-              if (value != null && value.length == 64) {
+              final isContactKey = value != null && value.length == 64;
+              final isGroupInvite =
+                  value != null &&
+                  value.startsWith('{') &&
+                  value.contains('"group_invite_link"');
+              if (isContactKey || isGroupInvite) {
                 setState(() => _scanned = true);
                 Navigator.pop(context);
                 widget.onScanned(value);

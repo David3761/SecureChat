@@ -168,18 +168,33 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
             AppRouter.groupDetails,
             arguments: widget.group,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              Text(groupName),
-              if (memberCount > 0)
-                Text(
-                  '$memberCount members',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: AppColors.primaryBlue.withValues(alpha: 0.2),
+                child: const FaIcon(
+                  FontAwesomeIcons.userGroup,
+                  size: 14,
+                  color: AppColors.primaryBlue,
                 ),
+              ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(groupName),
+                  if (memberCount > 0)
+                    Text(
+                      '$memberCount members',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
         ),
@@ -187,148 +202,214 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
       body: membersAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
-        data: (members) => Stack(
-          children: [
-            Column(
-              children: [
-                Expanded(
-                  child: messagesAsync.when(
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, _) => Center(child: Text('Error: $e')),
-                    data: (messages) {
-                      if (messages.isEmpty) {
-                        return const Center(
-                          child: Text(
-                            'No messages yet.\nSay hello to the group!',
-                            textAlign: TextAlign.center,
-                          ),
-                        );
-                      }
-
-                      final List<Widget> items = [];
-
-                      for (int i = 0; i < messages.length; i++) {
-                        final msg = messages[i];
-                        final isMe = msg.isFromMe;
-
-                        items.add(
-                          _GroupMessageBubble(
-                            message: msg,
-                            isMe: isMe,
-                            senderAlias: isMe
-                                ? null
-                                : _resolveAlias(
-                                    msg.senderPubKey,
-                                    members,
-                                    myPubKey,
-                                  ),
-                          ),
-                        );
-
-                        if (i + 1 < messages.length) {
-                          final gap = msg.timestamp.difference(
-                            messages[i + 1].timestamp,
+        data: (members) {
+          final isStillMember = members.any((m) => m.publicKey == myPubKey);
+          return Stack(
+            children: [
+              Column(
+                children: [
+                  Expanded(
+                    child: messagesAsync.when(
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (e, _) => Center(child: Text('Error: $e')),
+                      data: (messages) {
+                        if (messages.isEmpty) {
+                          return const Center(
+                            child: Text(
+                              'No messages yet.\nSay hello to the group!',
+                              textAlign: TextAlign.center,
+                            ),
                           );
-                          if (gap.inMinutes >= 60) {
-                            items.add(_buildSeparator(context, msg.timestamp));
+                        }
+
+                        final List<Widget> items = [];
+
+                        for (int i = 0; i < messages.length; i++) {
+                          final msg = messages[i];
+
+                          if (msg.senderPubKey == 'system') {
+                            items.add(
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Spacer(),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                      ),
+                                      child: Text(
+                                        msg.content,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                  ],
+                                ),
+                              ),
+                            );
+                          } else {
+                            final isMe = msg.isFromMe;
+                            items.add(
+                              _GroupMessageBubble(
+                                message: msg,
+                                isMe: isMe,
+                                senderAlias: isMe
+                                    ? null
+                                    : _resolveAlias(
+                                        msg.senderPubKey,
+                                        members,
+                                        myPubKey,
+                                      ),
+                              ),
+                            );
+                          }
+
+                          if (i + 1 < messages.length) {
+                            final gap = msg.timestamp.difference(
+                              messages[i + 1].timestamp,
+                            );
+                            if (gap.inMinutes >= 60) {
+                              items.add(
+                                _buildSeparator(context, msg.timestamp),
+                              );
+                            }
                           }
                         }
-                      }
 
-                      return ListView.builder(
-                        controller: _scrollController,
-                        reverse: true,
-                        itemCount: items.length,
-                        itemBuilder: (_, index) => items[index],
-                      );
-                    },
+                        return ListView.builder(
+                          controller: _scrollController,
+                          reverse: true,
+                          itemCount: items.length,
+                          itemBuilder: (_, index) => items[index],
+                        );
+                      },
+                    ),
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).scaffoldBackgroundColor,
-                    border: Border(
-                      top: BorderSide(
-                        color: Theme.of(context).colorScheme.outline,
+                  if (isStillMember)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
                       ),
-                    ),
-                  ),
-                  child: SafeArea(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _messageController,
-                            decoration: InputDecoration(
-                              hintText: 'Message...',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(24),
-                                borderSide: BorderSide.none,
-                              ),
-                              filled: true,
-                              fillColor: Theme.of(context).colorScheme.surface,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
-                              ),
-                            ),
-                            textCapitalization: TextCapitalization.sentences,
-                            minLines: 1,
-                            maxLines: 7,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        SendButton(
-                          contactId: 0,
-                          onPressed: () => _sendMessage(members),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (_showScrollToBottom)
-              Positioned(
-                bottom: 120,
-                right: 16,
-                child: AnimatedOpacity(
-                  opacity: _showScrollToBottom ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 200),
-                  child: GestureDetector(
-                    onTap: _scrollToBottom,
-                    child: Container(
-                      width: 36,
-                      height: 36,
                       decoration: BoxDecoration(
                         color: Theme.of(context).scaffoldBackgroundColor,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.08),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
+                        border: Border(
+                          top: BorderSide(
+                            color: Theme.of(context).colorScheme.outline,
                           ),
-                        ],
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        size: 22,
+                      child: SafeArea(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _messageController,
+                                decoration: InputDecoration(
+                                  hintText: 'Message...',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  filled: true,
+                                  fillColor: Theme.of(
+                                    context,
+                                  ).colorScheme.surface,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
+                                ),
+                                textCapitalization:
+                                    TextCapitalization.sentences,
+                                minLines: 1,
+                                maxLines: 7,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            SendButton(
+                              contactId: 0,
+                              onPressed: () => _sendMessage(members),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        border: Border(
+                          top: BorderSide(
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
+                        ),
+                      ),
+                      child: SafeArea(
+                        child: Text(
+                          "You're no longer a member of this group",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              if (_showScrollToBottom)
+                Positioned(
+                  bottom: 120,
+                  right: 16,
+                  child: AnimatedOpacity(
+                    opacity: _showScrollToBottom ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: GestureDetector(
+                      onTap: _scrollToBottom,
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).scaffoldBackgroundColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 22,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
-        ),
+            ],
+          );
+        },
       ),
     );
   }

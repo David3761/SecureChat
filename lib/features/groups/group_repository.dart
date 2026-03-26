@@ -93,6 +93,10 @@ class GroupRepository {
               expression: row.timestamp,
               mode: OrderingMode.desc,
             ),
+            (row) => OrderingTerm(
+              expression: row.id,
+              mode: OrderingMode.desc,
+            ),
           ]))
         .watch();
   }
@@ -129,6 +133,28 @@ class GroupRepository {
             status: isFromMe ? MessageStatus.sending : MessageStatus.delivered,
           ),
         );
+  }
+
+  Future<void> removeMember(String groupId, String publicKey) async {
+    await (_db.delete(_db.groupMembers)
+          ..where(
+            (row) =>
+                row.groupId.equals(groupId) & row.publicKey.equals(publicKey),
+          ))
+        .go();
+  }
+
+  Future<void> updateGroupName(String groupId, String? name) async {
+    await (_db.update(_db.groups)..where((row) => row.groupId.equals(groupId)))
+        .write(GroupsCompanion(name: Value(name)));
+  }
+
+  Future<void> leaveGroup(String groupId, String myPubKey) async {
+    await removeMember(groupId, myPubKey);
+    final remaining = await getMembersForGroup(groupId);
+    if (remaining.isEmpty) {
+      await deleteGroup(groupId);
+    }
   }
 
   Future<void> updateGroupMessageStatus(

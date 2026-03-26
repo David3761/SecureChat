@@ -2,7 +2,9 @@ import 'package:chat/core/database/app_database.dart';
 import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/providers.dart';
 import 'package:chat/features/contacts/contact_request_controller.dart';
+import 'package:chat/features/groups/group_controller.dart';
 import 'package:chat/features/groups/group_repository.dart';
+import 'package:chat/features/key_management/key_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -104,6 +106,53 @@ class IncomingMessageHandler {
 
         debugPrint('Joined group $groupId via invite.');
         break;
+      case 'group_join_request':
+        final groupId = data['group_id'] as String?;
+        if (groupId == null) break;
+
+        final groupRepo = _ref.read(groupRepositoryProvider);
+        if (groupRepo == null) break;
+
+        final group = await groupRepo.getGroupById(groupId);
+        if (group == null) break;
+
+        final myPubKey = _ref.read(keyControllerProvider).publicKeyHex;
+        final members = await groupRepo.getMembersForGroup(groupId);
+
+        final amAdmin = members.any(
+          (m) => m.publicKey == myPubKey && m.isAdmin,
+        );
+        if (!amAdmin) break;
+
+        if (members.any((m) => m.publicKey == senderPubKey)) break;
+
+        await groupRepo.addMember(
+          groupId: groupId,
+          publicKey: senderPubKey,
+          alias: contact.alias,
+          isAdmin: false,
+        );
+
+        final allMembers = await groupRepo.getMembersForGroup(groupId);
+        final groupController = _ref.read(
+          groupChatControllerProvider(groupId).notifier,
+        );
+
+        await groupController.sendGroupInvite(
+          recipientPubKey: senderPubKey,
+          groupName: group.name,
+          members: allMembers,
+        );
+
+        await groupController.sendGroupUpdate({
+          'update_type': 'member_added',
+          'pub_key': senderPubKey,
+          'alias': contact.alias,
+        });
+
+        debugPrint('Added $senderPubKey to group $groupId via QR join request.');
+        break;
+
       default:
         debugPrint('Unknown message type: ${data['type']}');
     }

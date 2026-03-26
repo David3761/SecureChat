@@ -125,7 +125,13 @@ class _ContactsListScreenState extends ConsumerState<ContactsListScreen> {
     Navigator.pushNamed(context, AppRouter.qrScanner, arguments: _handleQrScan);
   }
 
-  Future<void> _handleQrScan(String pubKey) async {
+  Future<void> _handleQrScan(String value) async {
+    if (value.startsWith('{')) {
+      await _handleGroupInviteQr(value);
+      return;
+    }
+    final pubKey = value;
+
     final keyState = ref.read(keyControllerProvider);
     if (keyState.publicKeyHex == pubKey) {
       ScaffoldMessenger.of(
@@ -185,6 +191,65 @@ class _ContactsListScreenState extends ConsumerState<ContactsListScreen> {
       recipientPubKey: pubKey,
       encryptedBlob: encryptedBlob,
     );
+  }
+
+  Future<void> _handleGroupInviteQr(String raw) async {
+    try {
+      final data = jsonDecode(raw) as Map<String, dynamic>;
+      if (data['type'] != 'group_invite_link') return;
+
+      final groupId = data['group_id'] as String?;
+      final adminPubKey = data['admin'] as String?;
+      final groupName = data['name'] as String?;
+      if (groupId == null || adminPubKey == null) return;
+
+      final keyState = ref.read(keyControllerProvider);
+      if (keyState.activeSecretKey == null) return;
+
+      final myPubKey = await ref.read(secureStorageProvider).getLastActiveAccount();
+      if (myPubKey == null) return;
+
+      if (myPubKey == adminPubKey) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("That's your own group QR code.")),
+          );
+        }
+        return;
+      }
+
+      final cryptoService = ref.read(cryptoServiceProvider);
+      final wsService = ref.read(webSocketServiceProvider);
+
+      final blob = cryptoService.encryptMessage(
+        plainText: jsonEncode({
+          'type': 'group_join_request',
+          'group_id': groupId,
+          'name': groupName,
+        }),
+        mySecretKey: keyState.activeSecretKey!,
+        theirPublicKeyHex: adminPubKey,
+      );
+
+      wsService.sendMessage(
+        messageId: const Uuid().v4(),
+        senderPubKey: myPubKey,
+        recipientPubKey: adminPubKey,
+        encryptedBlob: blob,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Join request sent to group admin.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to process group QR code.')),
+        );
+      }
+    }
   }
 
   @override

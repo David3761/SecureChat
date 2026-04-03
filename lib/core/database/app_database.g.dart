@@ -2160,6 +2160,327 @@ class GroupMessagesCompanion extends UpdateCompanion<GroupMessage> {
   }
 }
 
+class $GroupReadReceiptsTable extends GroupReadReceipts
+    with TableInfo<$GroupReadReceiptsTable, GroupReadReceipt> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GroupReadReceiptsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _memberPubKeyMeta = const VerificationMeta(
+    'memberPubKey',
+  );
+  @override
+  late final GeneratedColumn<String> memberPubKey = GeneratedColumn<String>(
+    'member_pub_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lastReadMessageIdMeta = const VerificationMeta(
+    'lastReadMessageId',
+  );
+  @override
+  late final GeneratedColumn<String> lastReadMessageId =
+      GeneratedColumn<String>(
+        'last_read_message_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    groupId,
+    memberPubKey,
+    lastReadMessageId,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'group_read_receipts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<GroupReadReceipt> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('member_pub_key')) {
+      context.handle(
+        _memberPubKeyMeta,
+        memberPubKey.isAcceptableOrUnknown(
+          data['member_pub_key']!,
+          _memberPubKeyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_memberPubKeyMeta);
+    }
+    if (data.containsKey('last_read_message_id')) {
+      context.handle(
+        _lastReadMessageIdMeta,
+        lastReadMessageId.isAcceptableOrUnknown(
+          data['last_read_message_id']!,
+          _lastReadMessageIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_lastReadMessageIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {groupId, memberPubKey},
+  ];
+  @override
+  GroupReadReceipt map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GroupReadReceipt(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      memberPubKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}member_pub_key'],
+      )!,
+      lastReadMessageId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_read_message_id'],
+      )!,
+    );
+  }
+
+  @override
+  $GroupReadReceiptsTable createAlias(String alias) {
+    return $GroupReadReceiptsTable(attachedDatabase, alias);
+  }
+}
+
+class GroupReadReceipt extends DataClass
+    implements Insertable<GroupReadReceipt> {
+  final int id;
+  final String groupId;
+  final String memberPubKey;
+  final String lastReadMessageId;
+  const GroupReadReceipt({
+    required this.id,
+    required this.groupId,
+    required this.memberPubKey,
+    required this.lastReadMessageId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['group_id'] = Variable<String>(groupId);
+    map['member_pub_key'] = Variable<String>(memberPubKey);
+    map['last_read_message_id'] = Variable<String>(lastReadMessageId);
+    return map;
+  }
+
+  GroupReadReceiptsCompanion toCompanion(bool nullToAbsent) {
+    return GroupReadReceiptsCompanion(
+      id: Value(id),
+      groupId: Value(groupId),
+      memberPubKey: Value(memberPubKey),
+      lastReadMessageId: Value(lastReadMessageId),
+    );
+  }
+
+  factory GroupReadReceipt.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GroupReadReceipt(
+      id: serializer.fromJson<int>(json['id']),
+      groupId: serializer.fromJson<String>(json['groupId']),
+      memberPubKey: serializer.fromJson<String>(json['memberPubKey']),
+      lastReadMessageId: serializer.fromJson<String>(json['lastReadMessageId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'groupId': serializer.toJson<String>(groupId),
+      'memberPubKey': serializer.toJson<String>(memberPubKey),
+      'lastReadMessageId': serializer.toJson<String>(lastReadMessageId),
+    };
+  }
+
+  GroupReadReceipt copyWith({
+    int? id,
+    String? groupId,
+    String? memberPubKey,
+    String? lastReadMessageId,
+  }) => GroupReadReceipt(
+    id: id ?? this.id,
+    groupId: groupId ?? this.groupId,
+    memberPubKey: memberPubKey ?? this.memberPubKey,
+    lastReadMessageId: lastReadMessageId ?? this.lastReadMessageId,
+  );
+  GroupReadReceipt copyWithCompanion(GroupReadReceiptsCompanion data) {
+    return GroupReadReceipt(
+      id: data.id.present ? data.id.value : this.id,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      memberPubKey: data.memberPubKey.present
+          ? data.memberPubKey.value
+          : this.memberPubKey,
+      lastReadMessageId: data.lastReadMessageId.present
+          ? data.lastReadMessageId.value
+          : this.lastReadMessageId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroupReadReceipt(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('memberPubKey: $memberPubKey, ')
+          ..write('lastReadMessageId: $lastReadMessageId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, groupId, memberPubKey, lastReadMessageId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GroupReadReceipt &&
+          other.id == this.id &&
+          other.groupId == this.groupId &&
+          other.memberPubKey == this.memberPubKey &&
+          other.lastReadMessageId == this.lastReadMessageId);
+}
+
+class GroupReadReceiptsCompanion extends UpdateCompanion<GroupReadReceipt> {
+  final Value<int> id;
+  final Value<String> groupId;
+  final Value<String> memberPubKey;
+  final Value<String> lastReadMessageId;
+  const GroupReadReceiptsCompanion({
+    this.id = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.memberPubKey = const Value.absent(),
+    this.lastReadMessageId = const Value.absent(),
+  });
+  GroupReadReceiptsCompanion.insert({
+    this.id = const Value.absent(),
+    required String groupId,
+    required String memberPubKey,
+    required String lastReadMessageId,
+  }) : groupId = Value(groupId),
+       memberPubKey = Value(memberPubKey),
+       lastReadMessageId = Value(lastReadMessageId);
+  static Insertable<GroupReadReceipt> custom({
+    Expression<int>? id,
+    Expression<String>? groupId,
+    Expression<String>? memberPubKey,
+    Expression<String>? lastReadMessageId,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (groupId != null) 'group_id': groupId,
+      if (memberPubKey != null) 'member_pub_key': memberPubKey,
+      if (lastReadMessageId != null) 'last_read_message_id': lastReadMessageId,
+    });
+  }
+
+  GroupReadReceiptsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? groupId,
+    Value<String>? memberPubKey,
+    Value<String>? lastReadMessageId,
+  }) {
+    return GroupReadReceiptsCompanion(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      memberPubKey: memberPubKey ?? this.memberPubKey,
+      lastReadMessageId: lastReadMessageId ?? this.lastReadMessageId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (memberPubKey.present) {
+      map['member_pub_key'] = Variable<String>(memberPubKey.value);
+    }
+    if (lastReadMessageId.present) {
+      map['last_read_message_id'] = Variable<String>(lastReadMessageId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroupReadReceiptsCompanion(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('memberPubKey: $memberPubKey, ')
+          ..write('lastReadMessageId: $lastReadMessageId')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2168,6 +2489,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $GroupsTable groups = $GroupsTable(this);
   late final $GroupMembersTable groupMembers = $GroupMembersTable(this);
   late final $GroupMessagesTable groupMessages = $GroupMessagesTable(this);
+  late final $GroupReadReceiptsTable groupReadReceipts =
+      $GroupReadReceiptsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2178,6 +2501,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     groups,
     groupMembers,
     groupMessages,
+    groupReadReceipts,
   ];
 }
 
@@ -3498,6 +3822,198 @@ typedef $$GroupMessagesTableProcessedTableManager =
       GroupMessage,
       PrefetchHooks Function()
     >;
+typedef $$GroupReadReceiptsTableCreateCompanionBuilder =
+    GroupReadReceiptsCompanion Function({
+      Value<int> id,
+      required String groupId,
+      required String memberPubKey,
+      required String lastReadMessageId,
+    });
+typedef $$GroupReadReceiptsTableUpdateCompanionBuilder =
+    GroupReadReceiptsCompanion Function({
+      Value<int> id,
+      Value<String> groupId,
+      Value<String> memberPubKey,
+      Value<String> lastReadMessageId,
+    });
+
+class $$GroupReadReceiptsTableFilterComposer
+    extends Composer<_$AppDatabase, $GroupReadReceiptsTable> {
+  $$GroupReadReceiptsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get memberPubKey => $composableBuilder(
+    column: $table.memberPubKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lastReadMessageId => $composableBuilder(
+    column: $table.lastReadMessageId,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$GroupReadReceiptsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GroupReadReceiptsTable> {
+  $$GroupReadReceiptsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get groupId => $composableBuilder(
+    column: $table.groupId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get memberPubKey => $composableBuilder(
+    column: $table.memberPubKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lastReadMessageId => $composableBuilder(
+    column: $table.lastReadMessageId,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$GroupReadReceiptsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GroupReadReceiptsTable> {
+  $$GroupReadReceiptsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get groupId =>
+      $composableBuilder(column: $table.groupId, builder: (column) => column);
+
+  GeneratedColumn<String> get memberPubKey => $composableBuilder(
+    column: $table.memberPubKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get lastReadMessageId => $composableBuilder(
+    column: $table.lastReadMessageId,
+    builder: (column) => column,
+  );
+}
+
+class $$GroupReadReceiptsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $GroupReadReceiptsTable,
+          GroupReadReceipt,
+          $$GroupReadReceiptsTableFilterComposer,
+          $$GroupReadReceiptsTableOrderingComposer,
+          $$GroupReadReceiptsTableAnnotationComposer,
+          $$GroupReadReceiptsTableCreateCompanionBuilder,
+          $$GroupReadReceiptsTableUpdateCompanionBuilder,
+          (
+            GroupReadReceipt,
+            BaseReferences<
+              _$AppDatabase,
+              $GroupReadReceiptsTable,
+              GroupReadReceipt
+            >,
+          ),
+          GroupReadReceipt,
+          PrefetchHooks Function()
+        > {
+  $$GroupReadReceiptsTableTableManager(
+    _$AppDatabase db,
+    $GroupReadReceiptsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GroupReadReceiptsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GroupReadReceiptsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GroupReadReceiptsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> groupId = const Value.absent(),
+                Value<String> memberPubKey = const Value.absent(),
+                Value<String> lastReadMessageId = const Value.absent(),
+              }) => GroupReadReceiptsCompanion(
+                id: id,
+                groupId: groupId,
+                memberPubKey: memberPubKey,
+                lastReadMessageId: lastReadMessageId,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String groupId,
+                required String memberPubKey,
+                required String lastReadMessageId,
+              }) => GroupReadReceiptsCompanion.insert(
+                id: id,
+                groupId: groupId,
+                memberPubKey: memberPubKey,
+                lastReadMessageId: lastReadMessageId,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$GroupReadReceiptsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $GroupReadReceiptsTable,
+      GroupReadReceipt,
+      $$GroupReadReceiptsTableFilterComposer,
+      $$GroupReadReceiptsTableOrderingComposer,
+      $$GroupReadReceiptsTableAnnotationComposer,
+      $$GroupReadReceiptsTableCreateCompanionBuilder,
+      $$GroupReadReceiptsTableUpdateCompanionBuilder,
+      (
+        GroupReadReceipt,
+        BaseReferences<
+          _$AppDatabase,
+          $GroupReadReceiptsTable,
+          GroupReadReceipt
+        >,
+      ),
+      GroupReadReceipt,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3512,4 +4028,6 @@ class $AppDatabaseManager {
       $$GroupMembersTableTableManager(_db, _db.groupMembers);
   $$GroupMessagesTableTableManager get groupMessages =>
       $$GroupMessagesTableTableManager(_db, _db.groupMessages);
+  $$GroupReadReceiptsTableTableManager get groupReadReceipts =>
+      $$GroupReadReceiptsTableTableManager(_db, _db.groupReadReceipts);
 }

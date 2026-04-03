@@ -155,6 +155,31 @@ class GroupChatController extends AsyncNotifier<void> {
     }
   }
 
+  Future<void> sendReadReceipt(String lastReadMessageId) async {
+    try {
+      final groupRepo = ref.read(groupRepositoryProvider);
+      final storageService = ref.read(secureStorageProvider);
+
+      if (groupRepo == null) return;
+
+      final myPubKey = await storageService.getLastActiveAccount();
+      if (myPubKey == null) return;
+
+      await groupRepo.upsertReadReceipt(
+        groupId: groupId,
+        memberPubKey: myPubKey,
+        lastReadMessageId: lastReadMessageId,
+      );
+
+      await sendGroupUpdate({
+        'update_type': 'read_receipt',
+        'last_read_message_id': lastReadMessageId,
+      });
+    } catch (e) {
+      debugPrint('Failed to send read receipt: $e');
+    }
+  }
+
   Future<void> sendGroupInvite({
     required String recipientPubKey,
     required String? groupName,

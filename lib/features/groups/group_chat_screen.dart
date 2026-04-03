@@ -25,6 +25,7 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   bool _showScrollToBottom = false;
+  String? _lastSentReceiptId;
 
   @override
   void initState() {
@@ -87,6 +88,36 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
     }
   }
 
+  Widget _buildSeenAvatarRow(
+    List<GroupReadReceipt> seenBy,
+    List<GroupMember> members,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 14, bottom: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: seenBy.map((receipt) {
+          final matching = members.where(
+            (m) => m.publicKey == receipt.memberPubKey,
+          );
+          final alias = matching.isEmpty ? '' : matching.first.alias;
+          final color = alias.isNotEmpty
+              ? AppColors.avatarColors[
+                    alias.hashCode.abs() % AppColors.avatarColors.length]
+              : AppColors.primaryBlue;
+          return Padding(
+            padding: const EdgeInsets.only(left: 2),
+            child: CircleAvatar(
+              radius: 10,
+              backgroundColor: color.withValues(alpha: 0.2),
+              child: FaIcon(FontAwesomeIcons.solidUser, size: 7, color: color),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildSeparator(BuildContext context, DateTime dt) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -142,6 +173,32 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
       data: (m) => m.length,
       orElse: () => 0,
     );
+
+    final receiptsAsync = ref.watch(
+      groupReadReceiptsStreamProvider(widget.group.groupId),
+    );
+
+    ref.listen(groupMessagesStreamProvider(widget.group.groupId), (_, next) {
+      next.whenData((messages) {
+        if (messages.isNotEmpty) {
+          final latestId = messages.first.messageId;
+          if (latestId != _lastSentReceiptId) {
+            _lastSentReceiptId = latestId;
+            Future.microtask(() {
+              if (mounted) {
+                ref
+                    .read(
+                      groupChatControllerProvider(
+                        widget.group.groupId,
+                      ).notifier,
+                    )
+                    .sendReadReceipt(latestId);
+              }
+            });
+          }
+        }
+      });
+    });
 
     ref.listen(groupChatControllerProvider(widget.group.groupId), (_, next) {
       if (next is AsyncError && mounted) {
@@ -223,10 +280,31 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
                           );
                         }
 
+                        final receipts = receiptsAsync.maybeWhen(
+                          data: (r) => r,
+                          orElse: () => <GroupReadReceipt>[],
+                        );
+
                         final List<Widget> items = [];
 
                         for (int i = 0; i < messages.length; i++) {
                           final msg = messages[i];
+
+                          // Seen avatars go before the bubble in the array so
+                          // that, in a reverse: true ListView, they render
+                          // visually below the message they belong to.
+                          final seenByOthers = receipts
+                              .where(
+                                (r) =>
+                                    r.lastReadMessageId == msg.messageId &&
+                                    r.memberPubKey != myPubKey,
+                              )
+                              .toList();
+                          if (seenByOthers.isNotEmpty) {
+                            items.add(
+                              _buildSeenAvatarRow(seenByOthers, members),
+                            );
+                          }
 
                           if (msg.senderPubKey == 'system') {
                             items.add(

@@ -334,6 +334,20 @@ class ConnectionController extends Notifier<ConnectionState> {
             );
             debugPrint('Member $leftKey left group $groupId.');
             break;
+          case 'read_receipt':
+            final lastReadMessageId =
+                data['last_read_message_id'] as String?;
+            if (lastReadMessageId != null) {
+              await groupRepo.upsertReadReceipt(
+                groupId: groupId,
+                memberPubKey: senderPubKey,
+                lastReadMessageId: lastReadMessageId,
+              );
+              debugPrint(
+                'Read receipt from $senderPubKey in group $groupId.',
+              );
+            }
+            break;
         }
       }
     } catch (e) {

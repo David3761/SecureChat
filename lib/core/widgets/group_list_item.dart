@@ -1,6 +1,5 @@
 import 'package:chat/core/app_router.dart';
 import 'package:chat/core/database/app_database.dart';
-import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/theme/theme.dart';
 import 'package:chat/features/groups/group_repository.dart';
 import 'package:chat/features/key_management/key_controller.dart';
@@ -27,6 +26,9 @@ class GroupListItem extends ConsumerWidget {
     final membersAsync = ref.watch(groupMembersStreamProvider(group.groupId));
     final myPubKey = ref.watch(
       keyControllerProvider.select((s) => s.publicKeyHex ?? ''),
+    );
+    final unreadCountAsync = ref.watch(
+      groupUnreadCountProvider((group.groupId, myPubKey)),
     );
 
     final String displayName;
@@ -158,13 +160,10 @@ class GroupListItem extends ConsumerWidget {
                                 );
                               }
                               final last = messages.first;
-                              final unreadCount = messages
-                                  .where(
-                                    (m) =>
-                                        !m.isFromMe &&
-                                        m.status == MessageStatus.delivered,
-                                  )
-                                  .length;
+                              final unreadCount = unreadCountAsync.maybeWhen(
+                                data: (c) => c,
+                                orElse: () => 0,
+                              );
 
                               return Row(
                                 mainAxisAlignment:

@@ -57,3 +57,15 @@ class GroupMessages extends Table {
   IntColumn get status => intEnum<MessageStatus>()();
   DateTimeColumn get timestamp => dateTime().withDefault(currentDateAndTime)();
 }
+
+class GroupReadReceipts extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get groupId => text()();
+  TextColumn get memberPubKey => text()();
+  TextColumn get lastReadMessageId => text()();
+
+  @override
+  List<Set<Column>> get uniqueKeys => [
+    {groupId, memberPubKey},
+  ];
+}

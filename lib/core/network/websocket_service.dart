@@ -23,8 +23,8 @@ class WebSocketService {
       _socket != null && _socket!.readyState == WebSocket.open;
 
   Future<void> connect(String myPublicKey, {int? torProxyPort}) async {
-    final String host = Platform.isAndroid ? '10.0.2.2' : '127.0.0.1';
-    final String wsUrl = 'ws://$host:8080/ws?pubkey=$myPublicKey';
+    final String wsUrl =
+        'wss://secure-relay-server-production.up.railway.app/ws?pubkey=$myPublicKey';
 
     try {
       if (torProxyPort != null) {

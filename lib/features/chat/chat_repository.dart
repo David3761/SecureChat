@@ -27,6 +27,7 @@ class MessagesRepository {
     required int contactId,
     required String content,
     required bool isFromMe,
+    MessageStatus? status,
   }) async {
     await _db
         .into(_db.messages)
@@ -36,9 +37,36 @@ class MessagesRepository {
             contactId: contactId,
             content: content,
             isFromMe: isFromMe,
-            status: isFromMe ? MessageStatus.sending : MessageStatus.delivered,
+            status:
+                status ??
+                (isFromMe ? MessageStatus.sending : MessageStatus.delivered),
           ),
         );
+  }
+
+  Future<List<Message>> getPendingMessagesForContact(int contactId) {
+    return (_db.select(_db.messages)
+          ..where(
+            (row) =>
+                row.contactId.equals(contactId) &
+                row.status.equals(MessageStatus.pendingAcceptance.index),
+          )
+          ..orderBy([
+            (row) =>
+                OrderingTerm(expression: row.timestamp, mode: OrderingMode.asc),
+          ]))
+        .get();
+  }
+
+  Future<void> dropExpiredPendingMessages() async {
+    final cutoff = DateTime.now().subtract(const Duration(days: 7));
+    await (_db.update(_db.messages)
+          ..where(
+            (row) =>
+                row.status.equals(MessageStatus.pendingAcceptance.index) &
+                row.timestamp.isSmallerThanValue(cutoff),
+          ))
+        .write(const MessagesCompanion(status: Value(MessageStatus.failed)));
   }
 
   Future<List<Message>> getUnreadMessages(int contactId) async {

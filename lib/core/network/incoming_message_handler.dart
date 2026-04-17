@@ -1,6 +1,7 @@
 import 'package:chat/core/database/app_database.dart';
 import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/providers.dart';
+import 'package:chat/features/chat/chat_controller.dart';
 import 'package:chat/features/contacts/contact_request_controller.dart';
 import 'package:chat/features/groups/group_controller.dart';
 import 'package:chat/features/groups/group_repository.dart';
@@ -61,6 +62,10 @@ class IncomingMessageHandler {
         if (nickname != null) {
           contactsRepo.updateAlias(contactId, nickname);
         }
+
+        await _ref
+            .read(chatControllerProvider(contactId).notifier)
+            .flushPendingMessages(contact);
         break;
       case 'profile_sync':
         final newAlias = data['nickname'] as String;

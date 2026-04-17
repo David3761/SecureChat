@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 
-enum MessageStatus { sending, delivered, read, failed }
+enum MessageStatus { sending, delivered, read, failed, pendingAcceptance }
 
 enum ContactStatus { active, pendingIn, pendingOut, blocked }
 

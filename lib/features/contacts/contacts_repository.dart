@@ -11,9 +11,13 @@ class ContactsRepository {
   ContactsRepository(this._db);
 
   Stream<List<Contact>> watchAllContacts() {
-    return (_db.select(
-      _db.contacts,
-    )..where((row) => row.status.equals(ContactStatus.active.index))).watch();
+    return (_db.select(_db.contacts)
+          ..where(
+            (row) =>
+                row.status.equals(ContactStatus.active.index) |
+                row.status.equals(ContactStatus.pendingOut.index),
+          ))
+        .watch();
   }
 
   Stream<Contact> watchContact(int contactId) {

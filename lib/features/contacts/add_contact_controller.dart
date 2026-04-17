@@ -1,3 +1,4 @@
+import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/providers.dart';
 import 'package:chat/features/chat/chat_controller.dart';
 import 'package:chat/features/key_management/key_controller.dart';
@@ -42,6 +43,7 @@ class AddContactController extends Notifier<AddContactState> {
       await repository.addContact(
         alias: alias.trim(),
         publicKey: cleanKey,
+        status: ContactStatus.pendingOut,
         disappearingAfterSeconds: defaultSeconds,
       );
 

@@ -144,6 +144,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         children: [
           Column(
             children: [
+              if (widget.contact.status == ContactStatus.pendingOut)
+                Container(
+                  width: double.infinity,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Text(
+                    'Messages will be delivered once they accept your request',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
               Expanded(
                 child: messagesStream.when(
                   loading: () =>

@@ -17,6 +17,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/database/app_database.dart';
+import '../../core/widgets/skeleton_bone.dart';
+import '../../core/widgets/skeletonizer.dart';
 import 'contacts_repository.dart';
 
 class ContactsListScreen extends ConsumerStatefulWidget {
@@ -206,7 +208,9 @@ class _ContactsListScreenState extends ConsumerState<ContactsListScreen> {
       final keyState = ref.read(keyControllerProvider);
       if (keyState.activeSecretKey == null) return;
 
-      final myPubKey = await ref.read(secureStorageProvider).getLastActiveAccount();
+      final myPubKey = await ref
+          .read(secureStorageProvider)
+          .getLastActiveAccount();
       if (myPubKey == null) return;
 
       if (myPubKey == adminPubKey) {
@@ -369,8 +373,64 @@ class _ContactsListScreenState extends ConsumerState<ContactsListScreen> {
                       const SliverToBoxAdapter(child: SizedBox.shrink()),
                 ),
                 contactsAsyncValue.when(
-                  loading: () => const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
+                  loading: () => SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 22.0),
+                    sliver: SliverToBoxAdapter(
+                      child: Skeletonizer(
+                        child: Column(
+                          children: List.generate(
+                            8,
+                            (_) => Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 16),
+                                  child: Row(
+                                    children: [
+                                      const SkeletonBone(
+                                        width: 64,
+                                        height: 64,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: const [
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                SkeletonBone(
+                                                  width: 120,
+                                                  height: 14,
+                                                ),
+                                                SkeletonBone(
+                                                  width: 40,
+                                                  height: 12,
+                                                ),
+                                              ],
+                                            ),
+                                            SizedBox(height: 8),
+                                            SkeletonBone(
+                                              width: 180,
+                                              height: 12,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Divider(indent: 80),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                   error: (error, stack) => SliverFillRemaining(
                     child: Center(child: Text('Error: $error')),
@@ -639,7 +699,7 @@ class HeaderDelegate extends SliverPersistentHeaderDelegate {
                         width: 32,
                         height: 32,
                         decoration: const BoxDecoration(
-                          color: AppColors.secondaryBackground,
+                          color: AppColors.primaryBlue,
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
@@ -648,7 +708,7 @@ class HeaderDelegate extends SliverPersistentHeaderDelegate {
                           icon: const FaIcon(
                             FontAwesomeIcons.plus,
                             size: 16,
-                            color: AppColors.onSecondaryBackground,
+                            color: AppColors.white,
                           ),
                         ),
                       ),

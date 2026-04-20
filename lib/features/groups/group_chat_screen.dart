@@ -102,8 +102,8 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
           );
           final alias = matching.isEmpty ? '' : matching.first.alias;
           final color = alias.isNotEmpty
-              ? AppColors.avatarColors[
-                    alias.hashCode.abs() % AppColors.avatarColors.length]
+              ? AppColors.avatarColors[alias.hashCode.abs() %
+                    AppColors.avatarColors.length]
               : AppColors.primaryBlue;
           return Padding(
             padding: const EdgeInsets.only(left: 2),
@@ -238,19 +238,25 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
                 ),
               ),
               const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(groupName),
-                  if (memberCount > 0)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      '$memberCount members',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                      groupName,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                ],
+                    if (memberCount > 0)
+                      Text(
+                        '$memberCount members',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -289,10 +295,6 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
 
                         for (int i = 0; i < messages.length; i++) {
                           final msg = messages[i];
-
-                          // Seen avatars go before the bubble in the array so
-                          // that, in a reverse: true ListView, they render
-                          // visually below the message they belong to.
                           final seenByOthers = receipts
                               .where(
                                 (r) =>
@@ -366,6 +368,7 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
                         return ListView.builder(
                           controller: _scrollController,
                           reverse: true,
+                          padding: EdgeInsets.zero,
                           itemCount: items.length,
                           itemBuilder: (_, index) => items[index],
                         );
@@ -380,11 +383,6 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: Theme.of(context).scaffoldBackgroundColor,
-                        border: Border(
-                          top: BorderSide(
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
-                        ),
                       ),
                       child: SafeArea(
                         child: Row(
@@ -394,10 +392,7 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
                                 controller: _messageController,
                                 decoration: InputDecoration(
                                   hintText: 'Message...',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                    borderSide: BorderSide.none,
-                                  ),
+                                  isDense: true,
                                   filled: true,
                                   fillColor: Theme.of(
                                     context,
@@ -406,9 +401,28 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
                                     horizontal: 16,
                                     vertical: 10,
                                   ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(999),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(999),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(999),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                      width: 1.5,
+                                    ),
+                                  ),
                                 ),
-                                textCapitalization:
-                                    TextCapitalization.sentences,
                                 minLines: 1,
                                 maxLines: 7,
                               ),

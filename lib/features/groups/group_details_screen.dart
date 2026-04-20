@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 
 import 'package:chat/core/database/app_database.dart';
 import 'package:chat/core/theme/theme.dart';
+import 'package:chat/core/widgets/skeleton_bone.dart';
+import 'package:chat/core/widgets/skeletonizer.dart';
 import 'package:chat/features/contacts/contacts_repository.dart';
 import 'package:chat/features/groups/add_members_sheet.dart';
 import 'package:chat/features/groups/group_controller.dart';
@@ -58,7 +60,6 @@ class _GroupDetailsScreenState extends ConsumerState<GroupDetailsScreen> {
         ],
       ),
     );
-    nameController.dispose();
     if (newName == null || !mounted) return;
 
     final savedName = newName.isEmpty ? null : newName;
@@ -383,6 +384,7 @@ class _GroupDetailsScreenState extends ConsumerState<GroupDetailsScreen> {
     final membersAsync = ref.watch(
       groupMembersStreamProvider(widget.group.groupId),
     );
+    ref.watch(groupChatControllerProvider(widget.group.groupId));
     final myPubKey = ref.watch(
       keyControllerProvider.select((s) => s.publicKeyHex ?? ''),
     );
@@ -438,9 +440,47 @@ class _GroupDetailsScreenState extends ConsumerState<GroupDetailsScreen> {
           ),
           SliverToBoxAdapter(
             child: membersAsync.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.all(32.0),
-                child: Center(child: CircularProgressIndicator()),
+              loading: () => Skeletonizer(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 24.0,
+                          vertical: 8.0,
+                        ),
+                        child: SkeletonBone(width: 80, height: 18),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: List.generate(
+                            4,
+                            (i) => Column(
+                              children: [
+                                const ListTile(
+                                  leading: SkeletonBone(
+                                    width: 40,
+                                    height: 40,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  title: SkeletonBone(width: 120, height: 14),
+                                ),
+                                if (i < 3)
+                                  const Divider(height: 1, indent: 72),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               error: (e, _) => Center(child: Text('Error: $e')),
               data: (members) {

@@ -1,4 +1,6 @@
 import 'package:chat/core/theme/theme.dart';
+import 'package:chat/core/widgets/skeleton_bone.dart';
+import 'package:chat/core/widgets/skeletonizer.dart';
 import 'package:chat/features/contacts/contact_request_controller.dart';
 import 'package:chat/features/contacts/contacts_repository.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +24,23 @@ class ContactRequestsScreen extends ConsumerWidget {
         title: const Text('Requests'),
       ),
       body: pendingAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Skeletonizer(
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+            itemCount: 5,
+            separatorBuilder: (_, _) => const Divider(height: 1),
+            itemBuilder: (_, _) => ListTile(
+              leading: const SkeletonBone(
+                width: 40,
+                height: 40,
+                shape: BoxShape.circle,
+              ),
+              title: const SkeletonBone(width: 120, height: 14),
+              subtitle: const SkeletonBone(width: 90, height: 11),
+              trailing: const SkeletonBone(width: 100, height: 32),
+            ),
+          ),
+        ),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (contacts) {
           if (contacts.isEmpty) {

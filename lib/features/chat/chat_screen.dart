@@ -86,6 +86,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  Widget _buildPendingNotice(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+      child: Text(
+        'Messages will be delivered once they accept your request',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 12,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+
   Widget _buildSeparator(BuildContext context, DateTime dt) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -137,30 +151,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             AppRouter.contactDetails,
             arguments: widget.contact,
           ),
-          child: Text(widget.contact.alias),
+          child: Text(widget.contact.alias, overflow: TextOverflow.ellipsis),
         ),
       ),
       body: Stack(
         children: [
           Column(
             children: [
-              if (widget.contact.status == ContactStatus.pendingOut)
-                Container(
-                  width: double.infinity,
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: Text(
-                    'Messages will be delivered once they accept your request',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
               Expanded(
                 child: messagesStream.when(
                   loading: () =>
@@ -172,11 +169,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     });
 
                     if (messages.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          'No messages yet.\nSend a message to start the secure channel.',
-                          textAlign: TextAlign.center,
-                        ),
+                      return Column(
+                        children: [
+                          const Expanded(
+                            child: Center(
+                              child: Text(
+                                'No messages yet.\nSend a message to start the secure channel.',
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                          if (widget.contact.status == ContactStatus.pendingOut)
+                            _buildPendingNotice(context),
+                        ],
                       );
                     }
 
@@ -228,9 +233,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       }
                     }
 
+                    if (widget.contact.status == ContactStatus.pendingOut) {
+                      items.insert(0, _buildPendingNotice(context));
+                    }
+
                     return ListView.builder(
                       controller: _scrollController,
                       reverse: true,
+                      padding: EdgeInsets.zero,
                       itemCount: items.length,
                       itemBuilder: (context, index) => items[index],
                     );
@@ -242,14 +252,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   horizontal: 8.0,
                   vertical: 8.0,
                 ),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  border: Border(
-                    top: BorderSide(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
-                  ),
-                ),
                 child: SafeArea(
                   child: Row(
                     children: [
@@ -258,18 +260,35 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           controller: _messageController,
                           decoration: InputDecoration(
                             hintText: 'Message...',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: BorderSide.none,
-                            ),
+                            isDense: true,
                             filled: true,
                             fillColor: Theme.of(context).colorScheme.surface,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 10,
                             ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(999),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                                width: 1.5,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(999),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                                width: 1.5,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(999),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                                width: 1.5,
+                              ),
+                            ),
                           ),
-                          textCapitalization: TextCapitalization.sentences,
                           minLines: 1,
                           maxLines: 7,
                         ),

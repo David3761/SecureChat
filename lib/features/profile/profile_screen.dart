@@ -22,6 +22,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../core/app_router.dart';
 import '../../core/providers.dart';
+import '../../core/widgets/skeleton_bone.dart';
+import '../../core/widgets/skeletonizer.dart';
 import '../key_management/key_controller.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -139,6 +141,155 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  Widget _buildSkeletonSettingsCard(
+    BuildContext context, {
+    required double labelWidth,
+    required List<Widget> rows,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 32.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 16.0, bottom: 8.0),
+            child: SkeletonBone(width: labelWidth, height: 13),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8.0),
+              color: AppColors.white,
+            ),
+            child: Column(children: rows),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkeletonScaffold(
+    BuildContext context,
+    double topPadding,
+    double minScrollHeight,
+  ) {
+    return Scaffold(
+      backgroundColor: AppColors.secondaryBackground,
+      body: Skeletonizer(
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 250.0 + topPadding,
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(height: topPadding),
+                      const SkeletonBone(
+                        width: 116,
+                        height: 116,
+                        shape: BoxShape.circle,
+                      ),
+                      const SizedBox(height: 16),
+                      SkeletonBone(width: 140, height: 22),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 22.0),
+              sliver: SliverToBoxAdapter(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: minScrollHeight),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      _buildSkeletonSettingsCard(
+                        context,
+                        labelWidth: 110,
+                        rows: [
+                          const ListTile(
+                            leading: SkeletonBone(
+                              width: 40,
+                              height: 40,
+                              shape: BoxShape.circle,
+                            ),
+                            title: SkeletonBone(width: 130, height: 14),
+                            subtitle: SkeletonBone(width: 90, height: 12),
+                          ),
+                          const Divider(height: 1, indent: 72, endIndent: 16),
+                          const ListTile(
+                            leading: SkeletonBone(
+                              width: 40,
+                              height: 40,
+                              shape: BoxShape.circle,
+                            ),
+                            title: SkeletonBone(width: 130, height: 14),
+                            subtitle: SkeletonBone(width: 90, height: 12),
+                          ),
+                          const Divider(height: 1, indent: 72, endIndent: 16),
+                          const ListTile(
+                            leading: SkeletonBone(width: 24, height: 24),
+                            title: SkeletonBone(width: 80, height: 14),
+                          ),
+                        ],
+                      ),
+                      _buildSkeletonSettingsCard(
+                        context,
+                        labelWidth: 60,
+                        rows: [
+                          const ListTile(
+                            leading: SkeletonBone(width: 22, height: 22),
+                            title: SkeletonBone(width: 140, height: 14),
+                          ),
+                          const Divider(height: 1, indent: 56),
+                          const ListTile(
+                            leading: SkeletonBone(width: 22, height: 22),
+                            title: SkeletonBone(width: 110, height: 14),
+                          ),
+                          const Divider(height: 1, indent: 56),
+                          ListTile(
+                            leading: const SkeletonBone(width: 22, height: 22),
+                            title: const SkeletonBone(width: 70, height: 14),
+                            trailing: const SkeletonBone(width: 40, height: 24),
+                          ),
+                          const Divider(height: 1, indent: 56),
+                          ListTile(
+                            leading: const SkeletonBone(width: 22, height: 22),
+                            title: const SkeletonBone(width: 95, height: 14),
+                            trailing: const SkeletonBone(width: 40, height: 24),
+                          ),
+                          const Divider(height: 1, indent: 56),
+                          ListTile(
+                            leading: const SkeletonBone(width: 22, height: 22),
+                            title: const SkeletonBone(width: 130, height: 14),
+                            trailing: const SkeletonBone(width: 40, height: 24),
+                          ),
+                          const Divider(height: 1, indent: 56),
+                          const ListTile(
+                            leading: SkeletonBone(width: 22, height: 22),
+                            title: SkeletonBone(width: 60, height: 14),
+                          ),
+                          const Divider(height: 1, indent: 56),
+                          const ListTile(
+                            leading: SkeletonBone(width: 22, height: 22),
+                            title: SkeletonBone(width: 100, height: 14),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final keyState = ref.watch(keyControllerProvider);
@@ -148,6 +299,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     final minScrollHeight =
         MediaQuery.of(context).size.height - (kToolbarHeight + topPadding);
+
+    if (_isLoadingAccounts) {
+      return _buildSkeletonScaffold(context, topPadding, minScrollHeight);
+    }
 
     return Scaffold(
       backgroundColor: AppColors.secondaryBackground,
@@ -183,8 +338,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     const SizedBox(height: 16),
                     TitledSettingsSection(
                       title: "Switch profile",
-                      options:
-                          !_isLoadingAccounts && _accountNicknames.length > 1
+                      options: _accountNicknames.length > 1
                           ? [
                               ..._accountNicknames.entries
                                   .where((entry) => entry.key != activePubKey)

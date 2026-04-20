@@ -23,13 +23,10 @@ class SendButton extends ConsumerWidget {
       child: isLoading
           ? const Padding(
               padding: EdgeInsets.all(10.0),
-              child: CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 2,
-              ),
+              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
             )
           : IconButton(
-              icon: const Icon(Icons.send, color: Colors.white),
+              icon: const Icon(Icons.send, color: Colors.white, size: 22),
               onPressed: onPressed,
             ),
     );

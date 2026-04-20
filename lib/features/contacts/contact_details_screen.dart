@@ -1,7 +1,10 @@
 import 'package:chat/core/app_router.dart';
 import 'package:chat/core/database/app_database.dart';
+import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/providers.dart';
 import 'package:chat/core/theme/theme.dart';
+import 'package:chat/core/widgets/skeleton_bone.dart';
+import 'package:chat/core/widgets/skeletonizer.dart';
 import 'package:chat/features/contacts/contacts_repository.dart';
 import 'package:chat/features/disappearing_messages/disappearing_options.dart';
 import 'package:flutter/material.dart';
@@ -29,7 +32,58 @@ class ContactDetailsScreen extends ConsumerWidget {
         backgroundColor: AppColors.secondaryBackground,
       ),
       body: contactAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Skeletonizer(
+          child: ListView(
+            children: [
+              const SizedBox(height: 24),
+              const Center(
+                child: SkeletonBone(
+                  width: 88,
+                  height: 88,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Center(child: SkeletonBone(width: 140, height: 20)),
+              const SizedBox(height: 32),
+              const Padding(
+                padding: EdgeInsets.only(left: 20, bottom: 6),
+                child: SkeletonBone(width: 80, height: 11),
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const SkeletonBone(height: 56),
+              ),
+              const SizedBox(height: 16),
+              const Padding(
+                padding: EdgeInsets.only(left: 20, bottom: 6),
+                child: SkeletonBone(width: 140, height: 11),
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: List.generate(
+                    4,
+                    (i) => Column(
+                      children: [
+                        const ListTile(
+                          title: SkeletonBone(width: 100, height: 14),
+                        ),
+                        if (i < 3) const Divider(height: 1, indent: 16, endIndent: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (contact) => ListView(
           children: [
@@ -103,6 +157,17 @@ class ContactDetailsScreen extends ConsumerWidget {
             _buildSection(
               context,
               children: [
+                ListTile(
+                  title: Text(
+                    'Block Contact',
+                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                      color: AppColors.red,
+                    ),
+                  ),
+                  leading: const Icon(Icons.block, color: AppColors.red),
+                  onTap: () => _confirmBlock(context, ref, contact),
+                ),
+                const Divider(height: 1, indent: 16, endIndent: 16),
                 ListTile(
                   title: Text(
                     'Delete Contact',
@@ -202,6 +267,40 @@ class ContactDetailsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmBlock(
+    BuildContext context,
+    WidgetRef ref,
+    Contact contact,
+  ) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Block Contact?'),
+        content: Text(
+          'Are you sure you want to block ${contact.alias}? '
+          'They will no longer be able to message you.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Block', style: TextStyle(color: AppColors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final repo = ref.read(contactsRepositoryProvider);
+      if (repo == null) throw Exception('Database not ready');
+      await repo.updateContactStatus(contact.id, ContactStatus.blocked);
+      if (context.mounted) Navigator.pop(context);
+    }
   }
 
   Future<void> _confirmDelete(

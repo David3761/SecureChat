@@ -1,5 +1,7 @@
 import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/providers.dart';
+import 'package:chat/core/widgets/skeleton_bone.dart';
+import 'package:chat/core/widgets/skeletonizer.dart';
 import 'package:chat/features/contacts/contacts_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,7 +24,23 @@ class BlockedContactsScreen extends ConsumerWidget {
         title: const Text('Blocked Contacts'),
       ),
       body: blockedAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => Skeletonizer(
+          child: ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: 5,
+            separatorBuilder: (_, _) => const Divider(height: 1),
+            itemBuilder: (_, _) => ListTile(
+              leading: const SkeletonBone(
+                width: 40,
+                height: 40,
+                shape: BoxShape.circle,
+              ),
+              title: const SkeletonBone(width: 120, height: 14),
+              subtitle: const SkeletonBone(width: 90, height: 11),
+              trailing: const SkeletonBone(width: 64, height: 32),
+            ),
+          ),
+        ),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (contacts) {
           if (contacts.isEmpty) {

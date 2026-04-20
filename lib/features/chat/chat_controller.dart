@@ -331,6 +331,14 @@ class ChatController extends AsyncNotifier<void> {
       final repository = ref.read(chatRepositoryProvider);
 
       if (repository == null) throw Exception('Database not ready.');
+
+      // Mark read locally first — dot must clear even if remote notify fails.
+      await repository.updateMessageStatus(
+        messageIds,
+        MessageStatus.read,
+        DateTime.now(),
+      );
+
       if (keyState.activeSecretKey == null) {
         throw Exception('Private key not loaded.');
       }
@@ -346,12 +354,6 @@ class ChatController extends AsyncNotifier<void> {
         plainText: payload,
         mySecretKey: keyState.activeSecretKey!,
         theirPublicKeyHex: contact.publicKey,
-      );
-
-      await repository.updateMessageStatus(
-        messageIds,
-        MessageStatus.read,
-        DateTime.now(),
       );
 
       final size = wsService.sendMessage(

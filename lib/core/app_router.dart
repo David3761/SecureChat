@@ -9,6 +9,8 @@ import 'package:chat/features/groups/create_group_screen.dart';
 import 'package:chat/features/groups/group_chat_screen.dart';
 import 'package:chat/features/groups/group_details_screen.dart';
 import 'package:chat/features/key_management/key_controller.dart';
+import 'package:chat/features/key_management/login_screen.dart';
+import 'package:chat/features/key_management/signup_screen.dart';
 import 'package:chat/features/main/main_screen.dart';
 import 'package:chat/features/profile/profile_screen.dart';
 import 'package:flutter/cupertino.dart';
@@ -17,13 +19,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/contacts/add_contact_screen.dart';
 import '../features/contacts/contacts_list_screen.dart';
-import '../features/key_management/key_screen.dart';
 
 class AppRouter {
   static final navigatorKey = GlobalKey<NavigatorState>();
   static const String authWrapper = '/';
   static const String mainScreen = '/main_screen';
   static const String onboarding = '/onboarding';
+  static const String login = '/login';
+  static const String signup = '/signup';
   static const String contacts = '/contacts';
   static const String addContact = '/add_contact';
   static const String chat = '/chat';
@@ -42,8 +45,10 @@ class AppRouter {
         return CupertinoPageRoute(builder: (_) => const MainScreen());
       case authWrapper:
         return CupertinoPageRoute(builder: (_) => const AuthGuard());
-      case onboarding:
-        return CupertinoPageRoute(builder: (_) => const OnboardingScreen());
+      case login:
+        return CupertinoPageRoute(builder: (_) => const LoginScreen());
+      case signup:
+        return CupertinoPageRoute(builder: (_) => const SignUpScreen());
       case contacts:
         return CupertinoPageRoute(builder: (_) => const ContactsListScreen());
       case addContact:
@@ -75,7 +80,9 @@ class AppRouter {
         return CupertinoPageRoute(builder: (_) => const CreateGroupScreen());
       case groupChat:
         final group = settings.arguments as Group;
-        return CupertinoPageRoute(builder: (_) => GroupChatScreen(group: group));
+        return CupertinoPageRoute(
+          builder: (_) => GroupChatScreen(group: group),
+        );
       case groupDetails:
         final group = settings.arguments as Group;
         return CupertinoPageRoute(
@@ -106,6 +113,6 @@ class AuthGuard extends ConsumerWidget {
       return const MainScreen();
     }
 
-    return const OnboardingScreen();
+    return const LoginScreen();
   }
 }

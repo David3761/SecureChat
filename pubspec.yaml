@@ -56,6 +56,8 @@ dependencies:
   tor: ^0.1.1
   socks5_proxy: ^2.1.1
   local_auth: ^3.0.1
+  image_picker: ^1.1.2
+  flutter_image_compress: ^2.3.0
 
 dev_dependencies:
   flutter_test:

@@ -1,5 +1,7 @@
 import 'package:chat/core/app_router.dart';
 import 'package:chat/core/database/app_database.dart';
+import 'package:chat/core/widgets/profile_avatar.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/providers.dart';
 import 'package:chat/core/theme/theme.dart';
@@ -10,7 +12,6 @@ import 'package:chat/features/disappearing_messages/disappearing_options.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ContactDetailsScreen extends ConsumerWidget {
   final Contact contact;
@@ -196,14 +197,12 @@ class ContactDetailsScreen extends ConsumerWidget {
     final avatarColor = AppColors.avatarColors[colorIndex];
     return Column(
       children: [
-        CircleAvatar(
+        ProfileAvatar(
+          imageData: contact.profilePicture,
           radius: 44,
           backgroundColor: avatarColor.withValues(alpha: 0.15),
-          child: FaIcon(
-            FontAwesomeIcons.solidUser,
-            color: avatarColor,
-            size: 36,
-          ),
+          iconColor: avatarColor,
+          iconSize: 36,
         ),
         const SizedBox(height: 12),
         Text(contact.alias, style: Theme.of(context).textTheme.headlineSmall),

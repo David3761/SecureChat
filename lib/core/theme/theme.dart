@@ -52,7 +52,7 @@ class AppTheme {
       displayMedium: TextStyle(
         color: AppColors.title,
         fontWeight: FontWeight.w800,
-        fontSize: 32,
+        fontSize: 28,
         letterSpacing: -0.8,
         height: 1.15,
       ),

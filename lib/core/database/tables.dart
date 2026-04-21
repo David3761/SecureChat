@@ -14,6 +14,7 @@ class Contacts extends Table {
       intEnum<ContactStatus>().withDefault(const Constant(0))();
   BoolColumn get isQrInitiated =>
       boolean().withDefault(const Constant(false))();
+  BlobColumn get profilePicture => blob().nullable()();
 }
 
 class Messages extends Table {
@@ -32,6 +33,7 @@ class Groups extends Table {
   TextColumn get groupId => text().unique()();
   TextColumn get name => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  BlobColumn get profilePicture => blob().nullable()();
 }
 
 class GroupMembers extends Table {
@@ -68,4 +70,12 @@ class GroupReadReceipts extends Table {
   List<Set<Column>> get uniqueKeys => [
     {groupId, memberPubKey},
   ];
+}
+
+class MyProfile extends Table {
+  IntColumn get id => integer().withDefault(const Constant(1))();
+  BlobColumn get profilePicture => blob().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
 }

@@ -130,6 +130,7 @@ class ChatController extends AsyncNotifier<void> {
       final cryptoService = ref.read(cryptoServiceProvider);
       final wsService = ref.read(webSocketServiceProvider);
       final storageService = ref.read(secureStorageProvider);
+      final messageSizeTracker = ref.read(messageSizeTrackerProvider);
 
       if (keyState.activeSecretKey == null) return;
       final myPubKey = await storageService.getLastActiveAccount();
@@ -162,7 +163,7 @@ class ChatController extends AsyncNotifier<void> {
             recipientPubKey: contact.publicKey,
             encryptedBlob: encryptedBlob,
           );
-          ref.read(messageSizeTrackerProvider).record(size);
+          messageSizeTracker.record(size);
 
           wsService.ackStream
               ?.firstWhere((id) => id == msg.messageId)

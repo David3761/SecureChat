@@ -346,6 +346,14 @@ class ConnectionController extends Notifier<ConnectionState> {
               debugPrint('Read receipt from $senderPubKey in group $groupId.');
             }
             break;
+          case 'profile_pic':
+            final picBase64 = data['pic_base64'] as String?;
+            final bytes = picBase64 != null
+                ? base64Decode(picBase64)
+                : null;
+            await groupRepo.updateGroupProfilePicture(groupId, bytes);
+            debugPrint('Group $groupId profile pic updated.');
+            break;
         }
       }
     } catch (e) {

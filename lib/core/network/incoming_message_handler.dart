@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:chat/core/database/app_database.dart';
 import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/providers.dart';
@@ -6,6 +9,7 @@ import 'package:chat/features/contacts/contact_request_controller.dart';
 import 'package:chat/features/groups/group_controller.dart';
 import 'package:chat/features/groups/group_repository.dart';
 import 'package:chat/features/key_management/key_controller.dart';
+import 'package:chat/features/profile/profile_picture_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -66,6 +70,11 @@ class IncomingMessageHandler {
         await _ref
             .read(chatControllerProvider(contactId).notifier)
             .flushPendingMessages(contact);
+        unawaited(
+          _ref
+              .read(profilePictureControllerProvider)
+              .sendMyProfilePicTo(contact.publicKey),
+        );
         break;
       case 'profile_sync':
         final newAlias = data['nickname'] as String;
@@ -80,6 +89,11 @@ class IncomingMessageHandler {
           MessageStatus.read,
           DateTime.now(),
         );
+        break;
+      case 'profile_pic_update':
+        final picBase64 = data['pic_base64'] as String?;
+        final bytes = picBase64 != null ? base64Decode(picBase64) : null;
+        await contactsRepo.updateContactProfilePicture(senderPubKey, bytes);
         break;
       case 'group_invite':
         debugPrint('[INVITE] received: ${data['group_id']}');

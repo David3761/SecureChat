@@ -12,11 +12,13 @@ import 'package:chat/features/mask_traffic/traffic_masking_service.dart';
 import 'package:chat/features/tor/tor_bootstrapping_dialog.dart';
 import 'package:chat/features/tor/tor_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   await dotenv.load(fileName: '.env');
 

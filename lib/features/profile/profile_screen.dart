@@ -6,7 +6,11 @@ import 'package:chat/features/app_lock/app_lock_service.dart';
 import 'package:chat/features/app_lock/timeout_picker.dart';
 import 'package:chat/features/disappearing_messages/show_disappearing_picker.dart';
 import 'package:chat/features/mask_traffic/show_traffic_mask_info.dart';
+import 'package:chat/core/widgets/profile_avatar.dart';
 import 'package:chat/features/profile/edit_nickname_dialog.dart';
+import 'package:chat/features/profile/my_profile_repository.dart';
+import 'package:chat/features/profile/profile_picture_controller.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:chat/core/widgets/settings_option.dart';
 import 'package:chat/core/widgets/titled_settings_section.dart';
 import 'package:chat/features/profile/show_qr_modal.dart';
@@ -59,6 +63,45 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         _isLoadingAccounts = false;
       });
     }
+  }
+
+  void _showAvatarOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take photo'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final controller = ref.read(profilePictureControllerProvider);
+                final bytes = await controller.pickAndCompress(
+                  source: ImageSource.camera,
+                );
+                if (bytes != null) {
+                  await controller.updateMyProfilePicture(bytes);
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from gallery'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final controller = ref.read(profilePictureControllerProvider);
+                final bytes = await controller.pickAndCompress();
+                if (bytes != null) {
+                  await controller.updateMyProfilePicture(bytes);
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _copyToClipboard(String text, String label) async {
@@ -295,6 +338,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final keyState = ref.watch(keyControllerProvider);
     final activePubKey = keyState.publicKeyHex ?? '';
     final activeNickname = keyState.nickname ?? 'My Profile';
+    final myPicData = ref.watch(myProfilePictureProvider).asData?.value;
     final topPadding = MediaQuery.of(context).padding.top;
 
     final minScrollHeight =
@@ -313,6 +357,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             delegate: ProfileHeaderDelegate(
               paddingTop: topPadding,
               activeNickname: activeNickname,
+              profilePicData: myPicData,
+              onTapAvatar: _showAvatarOptions,
               onEditNickname: () => showEditNicknameDialog(
                 context,
                 activePubKey,
@@ -568,6 +614,8 @@ class ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
   final VoidCallback onShowQr;
   final Color backgroundColor;
   final Color scrolledColor;
+  final Uint8List? profilePicData;
+  final VoidCallback? onTapAvatar;
 
   ProfileHeaderDelegate({
     required this.paddingTop,
@@ -576,6 +624,8 @@ class ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.onShowQr,
     required this.backgroundColor,
     required this.scrolledColor,
+    this.profilePicData,
+    this.onTapAvatar,
   });
 
   @override
@@ -635,16 +685,15 @@ class ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
                     children: [
                       Opacity(
                         opacity: expandedOpacityAvatar,
-                        child: CircleAvatar(
+                        child: ProfileAvatar(
+                          imageData: profilePicData,
                           radius: 58,
                           backgroundColor: AppColors.primaryBlue.withValues(
                             alpha: 0.2,
                           ),
-                          child: const FaIcon(
-                            FontAwesomeIcons.solidUser,
-                            size: 38,
-                            color: AppColors.primaryBlue,
-                          ),
+                          iconColor: AppColors.primaryBlue,
+                          iconSize: 38,
+                          onTap: onTapAvatar,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -654,10 +703,13 @@ class ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             const SizedBox(width: 48),
-                            Text(
-                              activeNickname,
-                              style: Theme.of(context).textTheme.displayMedium
-                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            Flexible(
+                              child: Text(
+                                activeNickname,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.displayMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
                             ),
                             IconButton(
                               icon: const Icon(
@@ -720,6 +772,7 @@ class ProfileHeaderDelegate extends SliverPersistentHeaderDelegate {
     return activeNickname != oldDelegate.activeNickname ||
         paddingTop != oldDelegate.paddingTop ||
         backgroundColor != oldDelegate.backgroundColor ||
-        scrolledColor != oldDelegate.scrolledColor;
+        scrolledColor != oldDelegate.scrolledColor ||
+        profilePicData != oldDelegate.profilePicData;
   }
 }

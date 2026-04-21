@@ -94,6 +94,18 @@ class $ContactsTable extends Contacts with TableInfo<$ContactsTable, Contact> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _profilePictureMeta = const VerificationMeta(
+    'profilePicture',
+  );
+  @override
+  late final GeneratedColumn<Uint8List> profilePicture =
+      GeneratedColumn<Uint8List>(
+        'profile_picture',
+        aliasedName,
+        true,
+        type: DriftSqlType.blob,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -103,6 +115,7 @@ class $ContactsTable extends Contacts with TableInfo<$ContactsTable, Contact> {
     disappearingAfterSeconds,
     status,
     isQrInitiated,
+    profilePicture,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -159,6 +172,15 @@ class $ContactsTable extends Contacts with TableInfo<$ContactsTable, Contact> {
         ),
       );
     }
+    if (data.containsKey('profile_picture')) {
+      context.handle(
+        _profilePictureMeta,
+        profilePicture.isAcceptableOrUnknown(
+          data['profile_picture']!,
+          _profilePictureMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -198,6 +220,10 @@ class $ContactsTable extends Contacts with TableInfo<$ContactsTable, Contact> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_qr_initiated'],
       )!,
+      profilePicture: attachedDatabase.typeMapping.read(
+        DriftSqlType.blob,
+        data['${effectivePrefix}profile_picture'],
+      ),
     );
   }
 
@@ -218,6 +244,7 @@ class Contact extends DataClass implements Insertable<Contact> {
   final int? disappearingAfterSeconds;
   final ContactStatus status;
   final bool isQrInitiated;
+  final Uint8List? profilePicture;
   const Contact({
     required this.id,
     required this.alias,
@@ -226,6 +253,7 @@ class Contact extends DataClass implements Insertable<Contact> {
     this.disappearingAfterSeconds,
     required this.status,
     required this.isQrInitiated,
+    this.profilePicture,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -245,6 +273,9 @@ class Contact extends DataClass implements Insertable<Contact> {
       );
     }
     map['is_qr_initiated'] = Variable<bool>(isQrInitiated);
+    if (!nullToAbsent || profilePicture != null) {
+      map['profile_picture'] = Variable<Uint8List>(profilePicture);
+    }
     return map;
   }
 
@@ -259,6 +290,9 @@ class Contact extends DataClass implements Insertable<Contact> {
           : Value(disappearingAfterSeconds),
       status: Value(status),
       isQrInitiated: Value(isQrInitiated),
+      profilePicture: profilePicture == null && nullToAbsent
+          ? const Value.absent()
+          : Value(profilePicture),
     );
   }
 
@@ -279,6 +313,7 @@ class Contact extends DataClass implements Insertable<Contact> {
         serializer.fromJson<int>(json['status']),
       ),
       isQrInitiated: serializer.fromJson<bool>(json['isQrInitiated']),
+      profilePicture: serializer.fromJson<Uint8List?>(json['profilePicture']),
     );
   }
   @override
@@ -296,6 +331,7 @@ class Contact extends DataClass implements Insertable<Contact> {
         $ContactsTable.$converterstatus.toJson(status),
       ),
       'isQrInitiated': serializer.toJson<bool>(isQrInitiated),
+      'profilePicture': serializer.toJson<Uint8List?>(profilePicture),
     };
   }
 
@@ -307,6 +343,7 @@ class Contact extends DataClass implements Insertable<Contact> {
     Value<int?> disappearingAfterSeconds = const Value.absent(),
     ContactStatus? status,
     bool? isQrInitiated,
+    Value<Uint8List?> profilePicture = const Value.absent(),
   }) => Contact(
     id: id ?? this.id,
     alias: alias ?? this.alias,
@@ -317,6 +354,9 @@ class Contact extends DataClass implements Insertable<Contact> {
         : this.disappearingAfterSeconds,
     status: status ?? this.status,
     isQrInitiated: isQrInitiated ?? this.isQrInitiated,
+    profilePicture: profilePicture.present
+        ? profilePicture.value
+        : this.profilePicture,
   );
   Contact copyWithCompanion(ContactsCompanion data) {
     return Contact(
@@ -331,6 +371,9 @@ class Contact extends DataClass implements Insertable<Contact> {
       isQrInitiated: data.isQrInitiated.present
           ? data.isQrInitiated.value
           : this.isQrInitiated,
+      profilePicture: data.profilePicture.present
+          ? data.profilePicture.value
+          : this.profilePicture,
     );
   }
 
@@ -343,7 +386,8 @@ class Contact extends DataClass implements Insertable<Contact> {
           ..write('createdat: $createdat, ')
           ..write('disappearingAfterSeconds: $disappearingAfterSeconds, ')
           ..write('status: $status, ')
-          ..write('isQrInitiated: $isQrInitiated')
+          ..write('isQrInitiated: $isQrInitiated, ')
+          ..write('profilePicture: $profilePicture')
           ..write(')'))
         .toString();
   }
@@ -357,6 +401,7 @@ class Contact extends DataClass implements Insertable<Contact> {
     disappearingAfterSeconds,
     status,
     isQrInitiated,
+    $driftBlobEquality.hash(profilePicture),
   );
   @override
   bool operator ==(Object other) =>
@@ -368,7 +413,8 @@ class Contact extends DataClass implements Insertable<Contact> {
           other.createdat == this.createdat &&
           other.disappearingAfterSeconds == this.disappearingAfterSeconds &&
           other.status == this.status &&
-          other.isQrInitiated == this.isQrInitiated);
+          other.isQrInitiated == this.isQrInitiated &&
+          $driftBlobEquality.equals(other.profilePicture, this.profilePicture));
 }
 
 class ContactsCompanion extends UpdateCompanion<Contact> {
@@ -379,6 +425,7 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
   final Value<int?> disappearingAfterSeconds;
   final Value<ContactStatus> status;
   final Value<bool> isQrInitiated;
+  final Value<Uint8List?> profilePicture;
   const ContactsCompanion({
     this.id = const Value.absent(),
     this.alias = const Value.absent(),
@@ -387,6 +434,7 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
     this.disappearingAfterSeconds = const Value.absent(),
     this.status = const Value.absent(),
     this.isQrInitiated = const Value.absent(),
+    this.profilePicture = const Value.absent(),
   });
   ContactsCompanion.insert({
     this.id = const Value.absent(),
@@ -396,6 +444,7 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
     this.disappearingAfterSeconds = const Value.absent(),
     this.status = const Value.absent(),
     this.isQrInitiated = const Value.absent(),
+    this.profilePicture = const Value.absent(),
   }) : alias = Value(alias),
        publicKey = Value(publicKey);
   static Insertable<Contact> custom({
@@ -406,6 +455,7 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
     Expression<int>? disappearingAfterSeconds,
     Expression<int>? status,
     Expression<bool>? isQrInitiated,
+    Expression<Uint8List>? profilePicture,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -416,6 +466,7 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
         'disappearing_after_seconds': disappearingAfterSeconds,
       if (status != null) 'status': status,
       if (isQrInitiated != null) 'is_qr_initiated': isQrInitiated,
+      if (profilePicture != null) 'profile_picture': profilePicture,
     });
   }
 
@@ -427,6 +478,7 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
     Value<int?>? disappearingAfterSeconds,
     Value<ContactStatus>? status,
     Value<bool>? isQrInitiated,
+    Value<Uint8List?>? profilePicture,
   }) {
     return ContactsCompanion(
       id: id ?? this.id,
@@ -437,6 +489,7 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
           disappearingAfterSeconds ?? this.disappearingAfterSeconds,
       status: status ?? this.status,
       isQrInitiated: isQrInitiated ?? this.isQrInitiated,
+      profilePicture: profilePicture ?? this.profilePicture,
     );
   }
 
@@ -468,6 +521,9 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
     if (isQrInitiated.present) {
       map['is_qr_initiated'] = Variable<bool>(isQrInitiated.value);
     }
+    if (profilePicture.present) {
+      map['profile_picture'] = Variable<Uint8List>(profilePicture.value);
+    }
     return map;
   }
 
@@ -480,7 +536,8 @@ class ContactsCompanion extends UpdateCompanion<Contact> {
           ..write('createdat: $createdat, ')
           ..write('disappearingAfterSeconds: $disappearingAfterSeconds, ')
           ..write('status: $status, ')
-          ..write('isQrInitiated: $isQrInitiated')
+          ..write('isQrInitiated: $isQrInitiated, ')
+          ..write('profilePicture: $profilePicture')
           ..write(')'))
         .toString();
   }
@@ -1047,8 +1104,26 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
+  static const VerificationMeta _profilePictureMeta = const VerificationMeta(
+    'profilePicture',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, groupId, name, createdAt];
+  late final GeneratedColumn<Uint8List> profilePicture =
+      GeneratedColumn<Uint8List>(
+        'profile_picture',
+        aliasedName,
+        true,
+        type: DriftSqlType.blob,
+        requiredDuringInsert: false,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    groupId,
+    name,
+    createdAt,
+    profilePicture,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1084,6 +1159,15 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
+    if (data.containsKey('profile_picture')) {
+      context.handle(
+        _profilePictureMeta,
+        profilePicture.isAcceptableOrUnknown(
+          data['profile_picture']!,
+          _profilePictureMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1109,6 +1193,10 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, Group> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      profilePicture: attachedDatabase.typeMapping.read(
+        DriftSqlType.blob,
+        data['${effectivePrefix}profile_picture'],
+      ),
     );
   }
 
@@ -1123,11 +1211,13 @@ class Group extends DataClass implements Insertable<Group> {
   final String groupId;
   final String? name;
   final DateTime createdAt;
+  final Uint8List? profilePicture;
   const Group({
     required this.id,
     required this.groupId,
     this.name,
     required this.createdAt,
+    this.profilePicture,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1138,6 +1228,9 @@ class Group extends DataClass implements Insertable<Group> {
       map['name'] = Variable<String>(name);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || profilePicture != null) {
+      map['profile_picture'] = Variable<Uint8List>(profilePicture);
+    }
     return map;
   }
 
@@ -1147,6 +1240,9 @@ class Group extends DataClass implements Insertable<Group> {
       groupId: Value(groupId),
       name: name == null && nullToAbsent ? const Value.absent() : Value(name),
       createdAt: Value(createdAt),
+      profilePicture: profilePicture == null && nullToAbsent
+          ? const Value.absent()
+          : Value(profilePicture),
     );
   }
 
@@ -1160,6 +1256,7 @@ class Group extends DataClass implements Insertable<Group> {
       groupId: serializer.fromJson<String>(json['groupId']),
       name: serializer.fromJson<String?>(json['name']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      profilePicture: serializer.fromJson<Uint8List?>(json['profilePicture']),
     );
   }
   @override
@@ -1170,6 +1267,7 @@ class Group extends DataClass implements Insertable<Group> {
       'groupId': serializer.toJson<String>(groupId),
       'name': serializer.toJson<String?>(name),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'profilePicture': serializer.toJson<Uint8List?>(profilePicture),
     };
   }
 
@@ -1178,11 +1276,15 @@ class Group extends DataClass implements Insertable<Group> {
     String? groupId,
     Value<String?> name = const Value.absent(),
     DateTime? createdAt,
+    Value<Uint8List?> profilePicture = const Value.absent(),
   }) => Group(
     id: id ?? this.id,
     groupId: groupId ?? this.groupId,
     name: name.present ? name.value : this.name,
     createdAt: createdAt ?? this.createdAt,
+    profilePicture: profilePicture.present
+        ? profilePicture.value
+        : this.profilePicture,
   );
   Group copyWithCompanion(GroupsCompanion data) {
     return Group(
@@ -1190,6 +1292,9 @@ class Group extends DataClass implements Insertable<Group> {
       groupId: data.groupId.present ? data.groupId.value : this.groupId,
       name: data.name.present ? data.name.value : this.name,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      profilePicture: data.profilePicture.present
+          ? data.profilePicture.value
+          : this.profilePicture,
     );
   }
 
@@ -1199,13 +1304,20 @@ class Group extends DataClass implements Insertable<Group> {
           ..write('id: $id, ')
           ..write('groupId: $groupId, ')
           ..write('name: $name, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('profilePicture: $profilePicture')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, groupId, name, createdAt);
+  int get hashCode => Object.hash(
+    id,
+    groupId,
+    name,
+    createdAt,
+    $driftBlobEquality.hash(profilePicture),
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1213,7 +1325,8 @@ class Group extends DataClass implements Insertable<Group> {
           other.id == this.id &&
           other.groupId == this.groupId &&
           other.name == this.name &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          $driftBlobEquality.equals(other.profilePicture, this.profilePicture));
 }
 
 class GroupsCompanion extends UpdateCompanion<Group> {
@@ -1221,29 +1334,34 @@ class GroupsCompanion extends UpdateCompanion<Group> {
   final Value<String> groupId;
   final Value<String?> name;
   final Value<DateTime> createdAt;
+  final Value<Uint8List?> profilePicture;
   const GroupsCompanion({
     this.id = const Value.absent(),
     this.groupId = const Value.absent(),
     this.name = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.profilePicture = const Value.absent(),
   });
   GroupsCompanion.insert({
     this.id = const Value.absent(),
     required String groupId,
     this.name = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.profilePicture = const Value.absent(),
   }) : groupId = Value(groupId);
   static Insertable<Group> custom({
     Expression<int>? id,
     Expression<String>? groupId,
     Expression<String>? name,
     Expression<DateTime>? createdAt,
+    Expression<Uint8List>? profilePicture,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (groupId != null) 'group_id': groupId,
       if (name != null) 'name': name,
       if (createdAt != null) 'created_at': createdAt,
+      if (profilePicture != null) 'profile_picture': profilePicture,
     });
   }
 
@@ -1252,12 +1370,14 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     Value<String>? groupId,
     Value<String?>? name,
     Value<DateTime>? createdAt,
+    Value<Uint8List?>? profilePicture,
   }) {
     return GroupsCompanion(
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       name: name ?? this.name,
       createdAt: createdAt ?? this.createdAt,
+      profilePicture: profilePicture ?? this.profilePicture,
     );
   }
 
@@ -1276,6 +1396,9 @@ class GroupsCompanion extends UpdateCompanion<Group> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (profilePicture.present) {
+      map['profile_picture'] = Variable<Uint8List>(profilePicture.value);
+    }
     return map;
   }
 
@@ -1285,7 +1408,8 @@ class GroupsCompanion extends UpdateCompanion<Group> {
           ..write('id: $id, ')
           ..write('groupId: $groupId, ')
           ..write('name: $name, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('profilePicture: $profilePicture')
           ..write(')'))
         .toString();
   }
@@ -2481,6 +2605,218 @@ class GroupReadReceiptsCompanion extends UpdateCompanion<GroupReadReceipt> {
   }
 }
 
+class $MyProfileTable extends MyProfile
+    with TableInfo<$MyProfileTable, MyProfileData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MyProfileTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _profilePictureMeta = const VerificationMeta(
+    'profilePicture',
+  );
+  @override
+  late final GeneratedColumn<Uint8List> profilePicture =
+      GeneratedColumn<Uint8List>(
+        'profile_picture',
+        aliasedName,
+        true,
+        type: DriftSqlType.blob,
+        requiredDuringInsert: false,
+      );
+  @override
+  List<GeneratedColumn> get $columns => [id, profilePicture];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'my_profile';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MyProfileData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('profile_picture')) {
+      context.handle(
+        _profilePictureMeta,
+        profilePicture.isAcceptableOrUnknown(
+          data['profile_picture']!,
+          _profilePictureMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MyProfileData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MyProfileData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      profilePicture: attachedDatabase.typeMapping.read(
+        DriftSqlType.blob,
+        data['${effectivePrefix}profile_picture'],
+      ),
+    );
+  }
+
+  @override
+  $MyProfileTable createAlias(String alias) {
+    return $MyProfileTable(attachedDatabase, alias);
+  }
+}
+
+class MyProfileData extends DataClass implements Insertable<MyProfileData> {
+  final int id;
+  final Uint8List? profilePicture;
+  const MyProfileData({required this.id, this.profilePicture});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    if (!nullToAbsent || profilePicture != null) {
+      map['profile_picture'] = Variable<Uint8List>(profilePicture);
+    }
+    return map;
+  }
+
+  MyProfileCompanion toCompanion(bool nullToAbsent) {
+    return MyProfileCompanion(
+      id: Value(id),
+      profilePicture: profilePicture == null && nullToAbsent
+          ? const Value.absent()
+          : Value(profilePicture),
+    );
+  }
+
+  factory MyProfileData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MyProfileData(
+      id: serializer.fromJson<int>(json['id']),
+      profilePicture: serializer.fromJson<Uint8List?>(json['profilePicture']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'profilePicture': serializer.toJson<Uint8List?>(profilePicture),
+    };
+  }
+
+  MyProfileData copyWith({
+    int? id,
+    Value<Uint8List?> profilePicture = const Value.absent(),
+  }) => MyProfileData(
+    id: id ?? this.id,
+    profilePicture: profilePicture.present
+        ? profilePicture.value
+        : this.profilePicture,
+  );
+  MyProfileData copyWithCompanion(MyProfileCompanion data) {
+    return MyProfileData(
+      id: data.id.present ? data.id.value : this.id,
+      profilePicture: data.profilePicture.present
+          ? data.profilePicture.value
+          : this.profilePicture,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MyProfileData(')
+          ..write('id: $id, ')
+          ..write('profilePicture: $profilePicture')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, $driftBlobEquality.hash(profilePicture));
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MyProfileData &&
+          other.id == this.id &&
+          $driftBlobEquality.equals(other.profilePicture, this.profilePicture));
+}
+
+class MyProfileCompanion extends UpdateCompanion<MyProfileData> {
+  final Value<int> id;
+  final Value<Uint8List?> profilePicture;
+  const MyProfileCompanion({
+    this.id = const Value.absent(),
+    this.profilePicture = const Value.absent(),
+  });
+  MyProfileCompanion.insert({
+    this.id = const Value.absent(),
+    this.profilePicture = const Value.absent(),
+  });
+  static Insertable<MyProfileData> custom({
+    Expression<int>? id,
+    Expression<Uint8List>? profilePicture,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (profilePicture != null) 'profile_picture': profilePicture,
+    });
+  }
+
+  MyProfileCompanion copyWith({
+    Value<int>? id,
+    Value<Uint8List?>? profilePicture,
+  }) {
+    return MyProfileCompanion(
+      id: id ?? this.id,
+      profilePicture: profilePicture ?? this.profilePicture,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (profilePicture.present) {
+      map['profile_picture'] = Variable<Uint8List>(profilePicture.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MyProfileCompanion(')
+          ..write('id: $id, ')
+          ..write('profilePicture: $profilePicture')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2491,6 +2827,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $GroupMessagesTable groupMessages = $GroupMessagesTable(this);
   late final $GroupReadReceiptsTable groupReadReceipts =
       $GroupReadReceiptsTable(this);
+  late final $MyProfileTable myProfile = $MyProfileTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2502,6 +2839,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     groupMembers,
     groupMessages,
     groupReadReceipts,
+    myProfile,
   ];
 }
 
@@ -2514,6 +2852,7 @@ typedef $$ContactsTableCreateCompanionBuilder =
       Value<int?> disappearingAfterSeconds,
       Value<ContactStatus> status,
       Value<bool> isQrInitiated,
+      Value<Uint8List?> profilePicture,
     });
 typedef $$ContactsTableUpdateCompanionBuilder =
     ContactsCompanion Function({
@@ -2524,6 +2863,7 @@ typedef $$ContactsTableUpdateCompanionBuilder =
       Value<int?> disappearingAfterSeconds,
       Value<ContactStatus> status,
       Value<bool> isQrInitiated,
+      Value<Uint8List?> profilePicture,
     });
 
 final class $$ContactsTableReferences
@@ -2592,6 +2932,11 @@ class $$ContactsTableFilterComposer
 
   ColumnFilters<bool> get isQrInitiated => $composableBuilder(
     column: $table.isQrInitiated,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<Uint8List> get profilePicture => $composableBuilder(
+    column: $table.profilePicture,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2664,6 +3009,11 @@ class $$ContactsTableOrderingComposer
     column: $table.isQrInitiated,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<Uint8List> get profilePicture => $composableBuilder(
+    column: $table.profilePicture,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ContactsTableAnnotationComposer
@@ -2697,6 +3047,11 @@ class $$ContactsTableAnnotationComposer
 
   GeneratedColumn<bool> get isQrInitiated => $composableBuilder(
     column: $table.isQrInitiated,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<Uint8List> get profilePicture => $composableBuilder(
+    column: $table.profilePicture,
     builder: (column) => column,
   );
 
@@ -2761,6 +3116,7 @@ class $$ContactsTableTableManager
                 Value<int?> disappearingAfterSeconds = const Value.absent(),
                 Value<ContactStatus> status = const Value.absent(),
                 Value<bool> isQrInitiated = const Value.absent(),
+                Value<Uint8List?> profilePicture = const Value.absent(),
               }) => ContactsCompanion(
                 id: id,
                 alias: alias,
@@ -2769,6 +3125,7 @@ class $$ContactsTableTableManager
                 disappearingAfterSeconds: disappearingAfterSeconds,
                 status: status,
                 isQrInitiated: isQrInitiated,
+                profilePicture: profilePicture,
               ),
           createCompanionCallback:
               ({
@@ -2779,6 +3136,7 @@ class $$ContactsTableTableManager
                 Value<int?> disappearingAfterSeconds = const Value.absent(),
                 Value<ContactStatus> status = const Value.absent(),
                 Value<bool> isQrInitiated = const Value.absent(),
+                Value<Uint8List?> profilePicture = const Value.absent(),
               }) => ContactsCompanion.insert(
                 id: id,
                 alias: alias,
@@ -2787,6 +3145,7 @@ class $$ContactsTableTableManager
                 disappearingAfterSeconds: disappearingAfterSeconds,
                 status: status,
                 isQrInitiated: isQrInitiated,
+                profilePicture: profilePicture,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -3211,6 +3570,7 @@ typedef $$GroupsTableCreateCompanionBuilder =
       required String groupId,
       Value<String?> name,
       Value<DateTime> createdAt,
+      Value<Uint8List?> profilePicture,
     });
 typedef $$GroupsTableUpdateCompanionBuilder =
     GroupsCompanion Function({
@@ -3218,6 +3578,7 @@ typedef $$GroupsTableUpdateCompanionBuilder =
       Value<String> groupId,
       Value<String?> name,
       Value<DateTime> createdAt,
+      Value<Uint8List?> profilePicture,
     });
 
 class $$GroupsTableFilterComposer
@@ -3246,6 +3607,11 @@ class $$GroupsTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<Uint8List> get profilePicture => $composableBuilder(
+    column: $table.profilePicture,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3278,6 +3644,11 @@ class $$GroupsTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<Uint8List> get profilePicture => $composableBuilder(
+    column: $table.profilePicture,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$GroupsTableAnnotationComposer
@@ -3300,6 +3671,11 @@ class $$GroupsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<Uint8List> get profilePicture => $composableBuilder(
+    column: $table.profilePicture,
+    builder: (column) => column,
+  );
 }
 
 class $$GroupsTableTableManager
@@ -3334,11 +3710,13 @@ class $$GroupsTableTableManager
                 Value<String> groupId = const Value.absent(),
                 Value<String?> name = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<Uint8List?> profilePicture = const Value.absent(),
               }) => GroupsCompanion(
                 id: id,
                 groupId: groupId,
                 name: name,
                 createdAt: createdAt,
+                profilePicture: profilePicture,
               ),
           createCompanionCallback:
               ({
@@ -3346,11 +3724,13 @@ class $$GroupsTableTableManager
                 required String groupId,
                 Value<String?> name = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<Uint8List?> profilePicture = const Value.absent(),
               }) => GroupsCompanion.insert(
                 id: id,
                 groupId: groupId,
                 name: name,
                 createdAt: createdAt,
+                profilePicture: profilePicture,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -4014,6 +4394,142 @@ typedef $$GroupReadReceiptsTableProcessedTableManager =
       GroupReadReceipt,
       PrefetchHooks Function()
     >;
+typedef $$MyProfileTableCreateCompanionBuilder =
+    MyProfileCompanion Function({
+      Value<int> id,
+      Value<Uint8List?> profilePicture,
+    });
+typedef $$MyProfileTableUpdateCompanionBuilder =
+    MyProfileCompanion Function({
+      Value<int> id,
+      Value<Uint8List?> profilePicture,
+    });
+
+class $$MyProfileTableFilterComposer
+    extends Composer<_$AppDatabase, $MyProfileTable> {
+  $$MyProfileTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<Uint8List> get profilePicture => $composableBuilder(
+    column: $table.profilePicture,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MyProfileTableOrderingComposer
+    extends Composer<_$AppDatabase, $MyProfileTable> {
+  $$MyProfileTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<Uint8List> get profilePicture => $composableBuilder(
+    column: $table.profilePicture,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MyProfileTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MyProfileTable> {
+  $$MyProfileTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<Uint8List> get profilePicture => $composableBuilder(
+    column: $table.profilePicture,
+    builder: (column) => column,
+  );
+}
+
+class $$MyProfileTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MyProfileTable,
+          MyProfileData,
+          $$MyProfileTableFilterComposer,
+          $$MyProfileTableOrderingComposer,
+          $$MyProfileTableAnnotationComposer,
+          $$MyProfileTableCreateCompanionBuilder,
+          $$MyProfileTableUpdateCompanionBuilder,
+          (
+            MyProfileData,
+            BaseReferences<_$AppDatabase, $MyProfileTable, MyProfileData>,
+          ),
+          MyProfileData,
+          PrefetchHooks Function()
+        > {
+  $$MyProfileTableTableManager(_$AppDatabase db, $MyProfileTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MyProfileTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MyProfileTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MyProfileTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<Uint8List?> profilePicture = const Value.absent(),
+              }) => MyProfileCompanion(id: id, profilePicture: profilePicture),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<Uint8List?> profilePicture = const Value.absent(),
+              }) => MyProfileCompanion.insert(
+                id: id,
+                profilePicture: profilePicture,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MyProfileTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MyProfileTable,
+      MyProfileData,
+      $$MyProfileTableFilterComposer,
+      $$MyProfileTableOrderingComposer,
+      $$MyProfileTableAnnotationComposer,
+      $$MyProfileTableCreateCompanionBuilder,
+      $$MyProfileTableUpdateCompanionBuilder,
+      (
+        MyProfileData,
+        BaseReferences<_$AppDatabase, $MyProfileTable, MyProfileData>,
+      ),
+      MyProfileData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4030,4 +4546,6 @@ class $AppDatabaseManager {
       $$GroupMessagesTableTableManager(_db, _db.groupMessages);
   $$GroupReadReceiptsTableTableManager get groupReadReceipts =>
       $$GroupReadReceiptsTableTableManager(_db, _db.groupReadReceipts);
+  $$MyProfileTableTableManager get myProfile =>
+      $$MyProfileTableTableManager(_db, _db.myProfile);
 }

@@ -1,6 +1,8 @@
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:chat/core/theme/theme.dart';
+import 'package:chat/core/widgets/profile_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -14,6 +16,8 @@ class GroupHeaderDelegate extends SliverPersistentHeaderDelegate {
   final VoidCallback onEdit;
   final Color backgroundColor;
   final Color scrolledColor;
+  final Uint8List? profilePicData;
+  final VoidCallback? onTapAvatar;
 
   GroupHeaderDelegate({
     required this.paddingTop,
@@ -25,6 +29,8 @@ class GroupHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.onEdit,
     required this.backgroundColor,
     required this.scrolledColor,
+    this.profilePicData,
+    this.onTapAvatar,
   });
 
   @override
@@ -81,16 +87,16 @@ class GroupHeaderDelegate extends SliverPersistentHeaderDelegate {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        CircleAvatar(
+                        ProfileAvatar(
+                          imageData: profilePicData,
                           radius: 50,
                           backgroundColor: AppColors.primaryBlue.withValues(
                             alpha: 0.2,
                           ),
-                          child: const FaIcon(
-                            FontAwesomeIcons.userGroup,
-                            size: 34,
-                            color: AppColors.primaryBlue,
-                          ),
+                          iconColor: AppColors.primaryBlue,
+                          fallbackIcon: FontAwesomeIcons.userGroup,
+                          iconSize: 34,
+                          onTap: onTapAvatar,
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -189,6 +195,7 @@ class GroupHeaderDelegate extends SliverPersistentHeaderDelegate {
         paddingTop != oldDelegate.paddingTop ||
         isAdmin != oldDelegate.isAdmin ||
         backgroundColor != oldDelegate.backgroundColor ||
-        scrolledColor != oldDelegate.scrolledColor;
+        scrolledColor != oldDelegate.scrolledColor ||
+        profilePicData != oldDelegate.profilePicData;
   }
 }

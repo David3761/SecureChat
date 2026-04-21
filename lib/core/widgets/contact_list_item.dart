@@ -1,5 +1,6 @@
 import 'package:chat/core/app_router.dart';
 import 'package:chat/core/database/app_database.dart';
+import 'package:chat/core/widgets/profile_avatar.dart';
 import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/theme/theme.dart';
 import 'package:chat/features/chat/chat_repository.dart';
@@ -8,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ContactListItem extends ConsumerWidget {
   final Contact contact;
@@ -81,14 +81,11 @@ class ContactListItem extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      CircleAvatar(
-                        minRadius: 32,
+                      ProfileAvatar(
+                        imageData: contact.profilePicture,
+                        radius: 32,
                         backgroundColor: avatarColor.withValues(alpha: 0.2),
-                        //TODO: profile pic
-                        child: FaIcon(
-                          FontAwesomeIcons.solidUser,
-                          color: avatarColor,
-                        ),
+                        iconColor: avatarColor,
                       ),
                       const SizedBox(width: 16),
                       Expanded(

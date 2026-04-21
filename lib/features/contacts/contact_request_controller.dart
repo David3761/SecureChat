@@ -1,10 +1,13 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:chat/core/database/app_database.dart';
 import 'package:chat/core/database/tables.dart';
+import 'package:chat/features/profile/profile_picture_controller.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 import '../../core/providers.dart';
 import '../key_management/key_controller.dart';
-import 'package:uuid/uuid.dart';
-import 'dart:convert';
 
 class ContactRequestController extends Notifier<Contact?> {
   @override
@@ -45,6 +48,12 @@ class ContactRequestController extends Notifier<Contact?> {
       senderPubKey: myPubKey,
       recipientPubKey: contact.publicKey,
       encryptedBlob: encryptedBlob,
+    );
+
+    unawaited(
+      ref
+          .read(profilePictureControllerProvider)
+          .sendMyProfilePicTo(contact.publicKey),
     );
 
     state = null;

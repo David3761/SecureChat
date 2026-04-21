@@ -1,5 +1,6 @@
 import 'package:chat/core/app_router.dart';
 import 'package:chat/core/database/app_database.dart';
+import 'package:chat/core/widgets/profile_avatar.dart';
 import 'package:chat/core/theme/theme.dart';
 import 'package:chat/features/groups/group_repository.dart';
 import 'package:chat/features/key_management/key_controller.dart';
@@ -98,14 +99,13 @@ class GroupListItem extends ConsumerWidget {
               width: double.infinity,
               child: Row(
                 children: [
-                  CircleAvatar(
-                    minRadius: 32,
+                  ProfileAvatar(
+                    imageData: group.profilePicture,
+                    radius: 32,
                     backgroundColor: avatarColor.withValues(alpha: 0.2),
-                    child: FaIcon(
-                      FontAwesomeIcons.userGroup,
-                      color: avatarColor,
-                      size: 20,
-                    ),
+                    iconColor: avatarColor,
+                    fallbackIcon: FontAwesomeIcons.userGroup,
+                    iconSize: 20,
                   ),
                   const SizedBox(width: 16),
                   Expanded(

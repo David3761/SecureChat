@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:chat/core/database/tables.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -149,6 +151,17 @@ class GroupRepository {
         .write(GroupsCompanion(name: Value(name)));
   }
 
+  Future<void> updateGroupProfilePicture(String groupId, Uint8List? bytes) async {
+    await (_db.update(_db.groups)..where((row) => row.groupId.equals(groupId)))
+        .write(GroupsCompanion(profilePicture: Value(bytes)));
+  }
+
+  Stream<Group?> watchGroupById(String groupId) {
+    return (_db.select(_db.groups)
+          ..where((row) => row.groupId.equals(groupId)))
+        .watchSingleOrNull();
+  }
+
   Future<void> leaveGroup(String groupId, String myPubKey) async {
     await removeMember(groupId, myPubKey);
     final remaining = await getMembersForGroup(groupId);
@@ -262,4 +275,11 @@ final groupUnreadCountProvider =
       final repository = ref.watch(groupRepositoryProvider);
       if (repository == null) return const Stream.empty();
       return repository.watchUnreadCountForGroup(groupId, myPubKey);
+    });
+
+final groupByIdStreamProvider =
+    StreamProvider.family<Group?, String>((ref, groupId) {
+      final repository = ref.watch(groupRepositoryProvider);
+      if (repository == null) return const Stream.empty();
+      return repository.watchGroupById(groupId);
     });

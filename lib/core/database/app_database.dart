@@ -8,7 +8,7 @@ import 'tables.dart';
 
 part 'app_database.g.dart';
 
-@DriftDatabase(tables: [Contacts, Messages, Groups, GroupMembers, GroupMessages, GroupReadReceipts])
+@DriftDatabase(tables: [Contacts, Messages, Groups, GroupMembers, GroupMessages, GroupReadReceipts, MyProfile])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(String publicKey, String encryptionKey)
     : super(_openConnection(publicKey, encryptionKey)) {
@@ -16,7 +16,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration {
@@ -47,6 +47,21 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 8) {
           await m.createTable(groupReadReceipts);
+        }
+        if (from < 9) {
+          await customStatement(
+            'ALTER TABLE contacts ADD COLUMN profile_picture BLOB',
+          );
+        }
+        if (from < 10) {
+          await customStatement(
+            'ALTER TABLE groups ADD COLUMN profile_picture BLOB',
+          );
+        }
+        if (from < 11) {
+          await customStatement(
+            'CREATE TABLE IF NOT EXISTS my_profile (id INTEGER NOT NULL DEFAULT 1 PRIMARY KEY, profile_picture BLOB)',
+          );
         }
       },
       beforeOpen: (details) async {

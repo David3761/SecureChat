@@ -4,6 +4,7 @@ import 'package:chat/core/database/tables.dart';
 import 'package:chat/core/theme/theme.dart';
 import 'package:chat/core/widgets/send_button.dart';
 import 'package:chat/features/groups/group_controller.dart';
+import 'package:chat/core/widgets/profile_avatar.dart';
 import 'package:chat/features/groups/group_repository.dart';
 import 'package:chat/features/key_management/key_controller.dart';
 import 'package:chat/features/utils/formatters.dart';
@@ -152,8 +153,12 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
       keyControllerProvider.select((s) => s.publicKeyHex ?? ''),
     );
 
+    final liveGroup = ref
+        .watch(groupByIdStreamProvider(widget.group.groupId))
+        .asData
+        ?.value;
     final String groupName;
-    final rawName = widget.group.name;
+    final rawName = liveGroup?.name ?? widget.group.name;
     if (rawName != null && rawName.isNotEmpty) {
       groupName = rawName;
     } else {
@@ -224,14 +229,13 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              CircleAvatar(
+              ProfileAvatar(
+                imageData: liveGroup?.profilePicture,
                 radius: 18,
                 backgroundColor: AppColors.primaryBlue.withValues(alpha: 0.2),
-                child: const FaIcon(
-                  FontAwesomeIcons.userGroup,
-                  size: 14,
-                  color: AppColors.primaryBlue,
-                ),
+                iconColor: AppColors.primaryBlue,
+                fallbackIcon: FontAwesomeIcons.userGroup,
+                iconSize: 14,
               ),
               const SizedBox(width: 10),
               Expanded(

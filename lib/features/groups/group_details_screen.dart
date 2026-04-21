@@ -14,6 +14,7 @@ import 'package:chat/features/groups/group_controller.dart';
 import 'package:chat/features/groups/group_header_delegate.dart';
 import 'package:chat/features/groups/group_repository.dart';
 import 'package:chat/features/key_management/key_controller.dart';
+import 'package:chat/features/profile/profile_picture_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -30,6 +31,14 @@ class GroupDetailsScreen extends ConsumerStatefulWidget {
 }
 
 class _GroupDetailsScreenState extends ConsumerState<GroupDetailsScreen> {
+  Future<void> _changeGroupPicture() async {
+    final controller = ref.read(profilePictureControllerProvider);
+    final bytes = await controller.pickAndCompress();
+    if (bytes != null) {
+      await controller.updateGroupProfilePicture(widget.group.groupId, bytes);
+    }
+  }
+
   Future<void> _editGroupName(String currentName) async {
     final repo = ref.read(groupRepositoryProvider);
     final groupController = ref.read(
@@ -384,6 +393,11 @@ class _GroupDetailsScreenState extends ConsumerState<GroupDetailsScreen> {
     final membersAsync = ref.watch(
       groupMembersStreamProvider(widget.group.groupId),
     );
+    final liveGroup = ref
+        .watch(groupByIdStreamProvider(widget.group.groupId))
+        .asData
+        ?.value;
+    final groupPicData = liveGroup?.profilePicture;
     ref.watch(groupChatControllerProvider(widget.group.groupId));
     final myPubKey = ref.watch(
       keyControllerProvider.select((s) => s.publicKeyHex ?? ''),
@@ -391,7 +405,7 @@ class _GroupDetailsScreenState extends ConsumerState<GroupDetailsScreen> {
     final topPadding = MediaQuery.of(context).padding.top;
 
     final String displayName;
-    final rawName = widget.group.name;
+    final rawName = liveGroup?.name ?? widget.group.name;
     if (rawName != null && rawName.isNotEmpty) {
       displayName = rawName;
     } else {
@@ -429,6 +443,8 @@ class _GroupDetailsScreenState extends ConsumerState<GroupDetailsScreen> {
               displayName: displayName,
               memberCountStr: memberCountStr,
               isAdmin: isAdmin,
+              profilePicData: groupPicData,
+              onTapAvatar: isAdmin ? _changeGroupPicture : null,
               onBack: () => Navigator.pop(context),
               onQr: () => _showQrInvite(displayName, myPubKey),
               onEdit: () => _editGroupName(displayName),

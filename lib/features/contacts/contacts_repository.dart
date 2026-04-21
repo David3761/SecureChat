@@ -11,12 +11,11 @@ class ContactsRepository {
   ContactsRepository(this._db);
 
   Stream<List<Contact>> watchAllContacts() {
-    return (_db.select(_db.contacts)
-          ..where(
-            (row) =>
-                row.status.equals(ContactStatus.active.index) |
-                row.status.equals(ContactStatus.pendingOut.index),
-          ))
+    return (_db.select(_db.contacts)..where(
+          (row) =>
+              row.status.equals(ContactStatus.active.index) |
+              row.status.equals(ContactStatus.pendingOut.index),
+        ))
         .watch();
   }
 
@@ -92,6 +91,21 @@ class ContactsRepository {
   Future<void> updateQrInitiated(int contactId, bool value) async {
     await (_db.update(_db.contacts)..where((row) => row.id.equals(contactId)))
         .write(ContactsCompanion(isQrInitiated: Value(value)));
+  }
+
+  Future<void> updateContactProfilePicture(
+    String publicKey,
+    Uint8List? bytes,
+  ) async {
+    await (_db.update(_db.contacts)
+          ..where((row) => row.publicKey.equals(publicKey)))
+        .write(ContactsCompanion(profilePicture: Value(bytes)));
+  }
+
+  Future<List<Contact>> getActiveContacts() {
+    return (_db.select(
+      _db.contacts,
+    )..where((row) => row.status.equals(ContactStatus.active.index))).get();
   }
 }
 

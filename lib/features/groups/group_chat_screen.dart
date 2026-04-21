@@ -178,26 +178,22 @@ class _GroupChatScreenState extends ConsumerState<GroupChatScreen> {
       groupReadReceiptsStreamProvider(widget.group.groupId),
     );
 
-    ref.listen(groupMessagesStreamProvider(widget.group.groupId), (_, next) {
-      next.whenData((messages) {
-        if (messages.isNotEmpty) {
-          final latestId = messages.first.messageId;
-          if (latestId != _lastSentReceiptId) {
-            _lastSentReceiptId = latestId;
-            Future.microtask(() {
-              if (mounted) {
-                ref
-                    .read(
-                      groupChatControllerProvider(
-                        widget.group.groupId,
-                      ).notifier,
-                    )
-                    .sendReadReceipt(latestId);
-              }
-            });
-          }
+    messagesAsync.whenData((messages) {
+      if (messages.isNotEmpty) {
+        final latestId = messages.first.messageId;
+        if (latestId != _lastSentReceiptId) {
+          _lastSentReceiptId = latestId;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              ref
+                  .read(
+                    groupChatControllerProvider(widget.group.groupId).notifier,
+                  )
+                  .sendReadReceipt(latestId);
+            }
+          });
         }
-      });
+      }
     });
 
     ref.listen(groupChatControllerProvider(widget.group.groupId), (_, next) {

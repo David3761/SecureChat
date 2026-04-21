@@ -172,11 +172,20 @@ class GroupRepository {
     required String memberPubKey,
     required String lastReadMessageId,
   }) async {
-    await _db.into(_db.groupReadReceipts).insertOnConflictUpdate(
+    await _db.into(_db.groupReadReceipts).insert(
       GroupReadReceiptsCompanion.insert(
         groupId: groupId,
         memberPubKey: memberPubKey,
         lastReadMessageId: lastReadMessageId,
+      ),
+      onConflict: DoUpdate(
+        (_) => GroupReadReceiptsCompanion(
+          lastReadMessageId: Value(lastReadMessageId),
+        ),
+        target: [
+          _db.groupReadReceipts.groupId,
+          _db.groupReadReceipts.memberPubKey,
+        ],
       ),
     );
   }

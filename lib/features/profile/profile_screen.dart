@@ -510,7 +510,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 ),
                               ),
                         ),
-                        //TODO: prevent ss
                         SettingsOption(
                           title: 'Mask traffic',
                           iconData: FontAwesomeIcons.server,

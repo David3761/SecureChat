@@ -1,5 +1,5 @@
 import 'package:chat/core/database/app_database.dart';
-import 'package:chat/core/theme/theme.dart';
+import 'package:chat/core/widgets/loading_screen.dart';
 import 'package:chat/core/widgets/qr_scanner_sheet.dart';
 import 'package:chat/features/chat/chat_screen.dart';
 import 'package:chat/features/contacts/blocked_contacts_screen.dart';
@@ -14,7 +14,6 @@ import 'package:chat/features/key_management/signup_screen.dart';
 import 'package:chat/features/main/main_screen.dart';
 import 'package:chat/features/profile/profile_screen.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/contacts/add_contact_screen.dart';
@@ -102,11 +101,7 @@ class AuthGuard extends ConsumerWidget {
     final keyState = ref.watch(keyControllerProvider);
 
     if (keyState.isLoading) {
-      //TODO: loading screen
-      return const Scaffold(
-        backgroundColor: AppColors.darkBackground,
-        body: Center(child: CircularProgressIndicator(color: AppColors.white)),
-      );
+      return const LoadingScreen();
     }
 
     if (keyState.isKeySetupComplete) {

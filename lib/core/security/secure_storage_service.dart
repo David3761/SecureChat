@@ -21,7 +21,6 @@ class SecureStorageService {
   String _defaultDisappearingId(String publicKey) =>
       '${publicKey}_default_disappearing_seconds';
 
-  //TODO add the nickname to the account data
   Future<List<String>> getKnownAccounts() async {
     final str = await _storage.read(key: _knownAccountsKey);
     if (str == null) return [];

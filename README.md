@@ -1,4 +1,4 @@
-# Zero-Knowledge Chat
+# Cipher
 
 A private, end-to-end encrypted messaging app for Android and iOS, paired with a lightweight Go relay server. The server never sees plaintext — it only routes encrypted blobs between clients.
 
@@ -27,6 +27,15 @@ A private, end-to-end encrypted messaging app for Android and iOS, paired with a
 - Contact request flow (pending / accepted / blocked)
 - Block and unblock contacts
 - Per-contact display aliases
+
+### Group Chats
+- Create encrypted group conversations with any subset of your contacts
+- Messages are individually encrypted for each member (no shared group key)
+- Group read receipts with per-member tracking
+- Invite new members via QR code
+- Add or remove members at any time
+- Edit group name and group picture
+- Leave a group at any time; admins can remove members
 
 ### Disappearing Messages
 - Set a per-contact auto-delete timer
@@ -113,11 +122,12 @@ A private, end-to-end encrypted messaging app for Android and iOS, paired with a
 │   │   └── security/                # Crypto service, secure storage service
 │   └── features/
 │       ├── app_lock/                # Biometric lock
-│       ├── chat/                    # Chat screen & controller
+│       ├── chat/                    # 1-to-1 chat screen & controller
 │       ├── contacts/                # Contact management
 │       ├── disappearing_messages/   # Auto-delete service
+│       ├── groups/                  # Group chat screen, controller & repository
 │       ├── key_management/          # Keypair generation & account switching
-│       ├── main/                    # Home screen (contact list)
+│       ├── main/                    # Home screen (chats + groups list)
 │       ├── mask_traffic/            # Dummy traffic service
 │       ├── profile/                 # Profile screen & QR display
 │       └── tor/                     # Tor bootstrap & provider
@@ -180,3 +190,6 @@ All payloads sent over the WebSocket are JSON with an encrypted `encrypted_blob`
 | `messages_read` | Read receipt (array of message IDs) |
 | `dummy` | Traffic masking — ignored by server |
 | `ping` / `disconnect` | Connection lifecycle — ignored by server |
+| `group_text` | Encrypted group message sent to each member individually |
+| `group_invite` | Invite a contact to join a group (includes group metadata) |
+| `group_update` | Group metadata change (name, picture, member add/remove) |

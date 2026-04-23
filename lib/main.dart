@@ -123,7 +123,7 @@ class _AppEntryState extends ConsumerState<AppEntry>
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Zero-Knowledge Chat',
+      title: 'Cipher',
       theme: AppTheme.lightTheme,
       initialRoute: AppRouter.authWrapper,
       onGenerateRoute: AppRouter.generateRoute,
